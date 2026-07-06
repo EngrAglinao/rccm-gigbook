@@ -657,6 +657,25 @@ button:active::after { background: rgba(255,255,255,0.12); }
     .theme-preset-card { transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
     .theme-preset-card:hover { transform: scale(1.04); }
     /* Bottom nav profile pic active border */
+
+    /* ── Role Picker ─────────────────────────── */
+    .role-pick-btn { display:flex;align-items:center;gap:14px;background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-card);padding:16px;cursor:pointer;text-align:left;transition:border-color 0.15s var(--ease-smooth); }
+    .role-pick-btn:hover { border-color:var(--accent); }
+    .role-pick-icon { flex-shrink:0;width:42px;height:42px;border-radius:12px;background:var(--accent-glow);color:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:22px; }
+    .role-pick-text { flex:1;display:flex;flex-direction:column;gap:2px; }
+    .role-pick-title { color:var(--lyrics-color);font-size:15px;font-weight:700; }
+    .role-pick-sub { color:var(--text-muted);font-size:12px; }
+    /* ── PIN Modal ───────────────────────────── */
+    .pin-key { background:var(--surface-2);border:1px solid var(--border-color);border-radius:12px;padding:16px;font-size:20px;font-weight:700;color:var(--lyrics-color);cursor:pointer;transition:background 0.12s; }
+    .pin-key:active { background:var(--accent-glow);border-color:var(--accent); }
+    .pin-key-cancel { color:var(--text-muted);font-size:12px;font-weight:600; }
+    .pin-key-del { color:var(--text-muted); }
+    /* ── Bottom Nav ──────────────────────────── */
+    .bnav-btn { flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;border:none;cursor:pointer;padding:8px 4px;color:var(--text-muted);transition:color 0.15s; }
+    .bnav-btn.active { color:var(--accent-soft); }
+    .bnav-icon { font-size:22px; }
+    .bnav-label { font-size:10px;font-weight:600;letter-spacing:0.03em; }
+
     /* Horizontal scrollbar hide for carousel */
     #theme-carousel::-webkit-scrollbar { display: none; }
     /* Admin branding logo hover */
@@ -679,104 +698,66 @@ button:active::after { background: rgba(255,255,255,0.12); }
   <div class="spinner" style="margin-top:32px;"></div>
 </div>
 
-<!-- AUTH VIEW -->
-<div id="auth-view" style="display:none;position:fixed;inset:0;background:var(--canvas-bg);flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:8000;">
-  <img src="icons/logo.png" alt="RCCM Gigbook" style="width:90px;height:90px;border-radius:18px;object-fit:cover;margin-bottom:28px;" onerror="this.style.background='linear-gradient(135deg,#922b21,#c0392b)';this.style.display='flex'" />
-  <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin-bottom:4px;">RCCM Gigbook</h1>
-  <p style="color:var(--text-muted);font-size:13px;margin-bottom:36px;">Your performance companion</p>
-  <button id="google-signin-btn" style="display:flex;align-items:center;gap:10px;background:#fff;color:#111;border:none;border-radius:12px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;width:100%;max-width:320px;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.3);">
-    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    Sign In with Google
-  </button>
-  <button id="install-app-btn" style="display:none;align-items:center;gap:10px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:12px;padding:11px 24px;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:320px;justify-content:center;margin-top:12px;">
-    <iconify-icon icon="mdi:download" style="font-size:18px;"></iconify-icon>
-    Install App
-  </button>
-  <div id="auth-error" style="color:#ef4444;font-size:13px;margin-top:16px;text-align:center;display:none;"></div>
-  <div id="prev-account-chip" style="display:none;margin-top:20px;"></div>
-</div>
-
-<!-- PENDING APPROVAL SCREEN -->
-<div id="pending-approval-screen" style="display:none;position:fixed;inset:0;background:var(--canvas-bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:7500;text-align:center;">
-  <div style="width:88px;height:88px;border-radius:50%;background:var(--surface-2);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 0 0 8px var(--accent-glow);">
-    <iconify-icon icon="mdi:clock-outline" style="font-size:44px;color:var(--accent);"></iconify-icon>
-  </div>
-  <h2 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0 0 10px;">Account Pending Approval</h2>
-  <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin:0 0 8px;max-width:320px;">Your account has been registered and is awaiting approval from an Admin.</p>
-  <p style="color:var(--text-muted);font-size:13px;margin:0 0 32px;max-width:320px;">You'll get full access once your role is assigned. In the meantime, you can browse public setlists.</p>
-  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;">
-    <button onclick="proceedAsGuest()" style="background:var(--btn-primary-bg);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-      <iconify-icon icon="mdi:playlist-music" style="font-size:18px;"></iconify-icon>
-      Continue as Guest
-    </button>
-    <button onclick="signOut()" style="background:transparent;border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">
-      Sign Out
-    </button>
-  </div>
-  <p id="pending-user-email" style="color:var(--text-muted);font-size:11px;margin-top:24px;"></p>
-</div>
-
-<!-- ONBOARDING MODAL -->
-<div id="onboarding-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:7000;align-items:flex-end;justify-content:center;">
-  <div style="background:var(--surface-1);border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:24px;max-height:90vh;overflow-y:auto;">
-    <div class="modal-handle"></div>
-    <h2 style="color:var(--lyrics-color);font-size:18px;font-weight:700;margin-bottom:4px;">Welcome to RCCM Gigbook</h2>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Tell us your role to get started</p>
-    <div style="background:var(--surface-2);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px;margin-bottom:16px;">
-      <p style="color:var(--accent);font-size:12px;font-weight:600;margin:0 0 3px;">📌 Heads up!</p>
-      <p style="color:var(--text-secondary);font-size:12px;margin:0;line-height:1.5;">If you play an instrument or sing but also help with Tech, select your musical role — you can indicate Tech involvement below. Only select Tech if that's your <em>only</em> function.</p>
-    </div>
-    <div id="onboarding-role-selector" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;">
-      <button class="onboarding-btn" onclick="selectOnboardingRole('Musician')">
-        <iconify-icon icon="mdi:guitar-electric" style="font-size:26px;display:block;margin:0 auto 6px;color:var(--accent);"></iconify-icon>
-        Musician
-      </button>
-      <button class="onboarding-btn" onclick="selectOnboardingRole('Singer')">
-        <iconify-icon icon="mdi:microphone" style="font-size:26px;display:block;margin:0 auto 6px;color:#db2777;"></iconify-icon>
-        Singer
-      </button>
-      <button class="onboarding-btn" onclick="selectOnboardingRole('Tech')">
-        <iconify-icon icon="mdi:monitor-dashboard" style="font-size:26px;display:block;margin:0 auto 6px;color:#0891b2;"></iconify-icon>
-        Tech
-      </button>
-    </div>
-    <div id="musician-options" style="display:none;">
-      <div class="section-label" style="margin-bottom:8px;">Your Instruments <span style="color:#ef4444;">*</span> <span style="color:var(--text-muted);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;">(required)</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:8px;color:var(--lyrics-color);font-size:14px;cursor:pointer;">
-          <input type="checkbox" class="checkbox-custom" id="ob-guitar" value="Guitar"> 
-          <iconify-icon icon="mdi:guitar-electric" style="font-size:16px;color:var(--accent);"></iconify-icon> Guitar
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;color:var(--lyrics-color);font-size:14px;cursor:pointer;">
-          <input type="checkbox" class="checkbox-custom" id="ob-keyboard" value="Keyboard"> 
-          <iconify-icon icon="mdi:piano" style="font-size:16px;color:var(--accent);"></iconify-icon> Keyboard
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;color:var(--lyrics-color);font-size:14px;cursor:pointer;">
-          <input type="checkbox" class="checkbox-custom" id="ob-djembe" value="Djembe"> 
-          <iconify-icon icon="mdi:drum" style="font-size:16px;color:var(--accent);"></iconify-icon> Djembe
-        </label>
-      </div>
-      <div id="ob-instrument-error" style="display:none;color:#ef4444;font-size:12px;margin-bottom:10px;">⚠ Please select at least one instrument.</div>
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-        <label style="display:flex;align-items:center;justify-content:space-between;color:var(--lyrics-color);font-size:14px;">
-          <span>
-            <iconify-icon icon="mdi:microphone" style="font-size:15px;vertical-align:middle;margin-right:6px;color:#db2777;"></iconify-icon>
-            Do you also sing?
-          </span>
-          <label class="toggle-switch"><input type="checkbox" id="ob-can-sing"><span class="toggle-slider"></span></label>
-        </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;color:var(--lyrics-color);font-size:14px;">
-          <span>
-            <iconify-icon icon="mdi:monitor-dashboard" style="font-size:15px;vertical-align:middle;margin-right:6px;color:#0891b2;"></iconify-icon>
-            Do you also help with Tech?
-          </span>
-          <label class="toggle-switch"><input type="checkbox" id="ob-is-tech"><span class="toggle-slider"></span></label>
-        </label>
+<!-- ROLE PICKER SCREEN -->
+<div id="role-picker-screen" style="display:none;position:fixed;inset:0;background:var(--canvas-bg);flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:8000;">
+  <div style="margin-bottom:32px;text-align:center;">
+    <div id="role-picker-logo-wrap" onclick="handleLogoPinTap()" style="cursor:pointer;display:inline-block;position:relative;margin-bottom:16px;">
+      <img src="icons/logo.png" alt="RCCM Gigbook" style="width:80px;height:80px;border-radius:18px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('role-logo-fallback').style.display='flex'" />
+      <div id="role-logo-fallback" style="display:none;width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,#922b21,#c0392b);align-items:center;justify-content:center;">
+        <iconify-icon icon="mdi:music-note" style="font-size:40px;color:#fff;"></iconify-icon>
       </div>
     </div>
-    <button id="onboarding-confirm-btn" style="display:none;width:100%;" class="btn-primary" onclick="confirmOnboarding()">
-      Confirm & Continue
+    <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0 0 4px;">RCCM Gigbook</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin:0;">Who are you today?</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;">
+    <button class="role-pick-btn" onclick="selectViewerRole('musician')">
+      <div class="role-pick-icon"><iconify-icon icon="mdi:guitar-acoustic"></iconify-icon></div>
+      <div class="role-pick-text"><span class="role-pick-title">Musician</span><span class="role-pick-sub">Full chords &amp; lyrics</span></div>
+      <iconify-icon icon="mdi:chevron-right" style="font-size:22px;color:var(--text-muted);"></iconify-icon>
     </button>
+    <button class="role-pick-btn" onclick="selectViewerRole('singer')">
+      <div class="role-pick-icon"><iconify-icon icon="mdi:microphone-variant"></iconify-icon></div>
+      <div class="role-pick-text"><span class="role-pick-title">Singer</span><span class="role-pick-sub">Lyrics only</span></div>
+      <iconify-icon icon="mdi:chevron-right" style="font-size:22px;color:var(--text-muted);"></iconify-icon>
+    </button>
+    <button class="role-pick-btn" onclick="selectViewerRole('tech')">
+      <div class="role-pick-icon"><iconify-icon icon="mdi:monitor-speaker"></iconify-icon></div>
+      <div class="role-pick-text"><span class="role-pick-title">Tech Team</span><span class="role-pick-sub">Lyrics only</span></div>
+      <iconify-icon icon="mdi:chevron-right" style="font-size:22px;color:var(--text-muted);"></iconify-icon>
+    </button>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div id="pin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9500;align-items:center;justify-content:center;">
+  <div style="background:var(--surface-1);border-radius:20px;width:calc(100% - 48px);max-width:320px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <iconify-icon icon="mdi:shield-lock" style="font-size:36px;color:var(--accent-soft);"></iconify-icon>
+    <h3 style="color:var(--lyrics-color);font-size:17px;font-weight:700;margin:0;">Admin Access</h3>
+    <p style="color:var(--text-muted);font-size:12px;margin:0;text-align:center;">Enter your PIN to continue</p>
+    <!-- PIN dots -->
+    <div style="display:flex;gap:12px;margin:4px 0;">
+      <div id="pin-dot-0" style="width:14px;height:14px;border-radius:50%;background:var(--border-color);transition:background 0.15s;"></div>
+      <div id="pin-dot-1" style="width:14px;height:14px;border-radius:50%;background:var(--border-color);transition:background 0.15s;"></div>
+      <div id="pin-dot-2" style="width:14px;height:14px;border-radius:50%;background:var(--border-color);transition:background 0.15s;"></div>
+      <div id="pin-dot-3" style="width:14px;height:14px;border-radius:50%;background:var(--border-color);transition:background 0.15s;"></div>
+    </div>
+    <div id="pin-error" style="display:none;color:#e05555;font-size:12px;font-weight:600;"></div>
+    <!-- Number pad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-key-cancel" onclick="closePinModal()" style="font-size:12px;">Cancel</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="pinBackspace()"><iconify-icon icon="mdi:backspace-outline" style="font-size:20px;"></iconify-icon></button>
+    </div>
   </div>
 </div>
 
@@ -788,11 +769,6 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
   <!-- Sync loading bar -->
   <div id="sync-bar"><div id="sync-bar-fill"></div></div>
-
-  <!-- FLOATING HAMBURGER (top-left) -->
-  <button id="hamburger-btn" onclick="toggleSidebar()" style="position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:400;width:46px;height:46px;border-radius:50%;background:var(--surface-1);border:1px solid var(--border-color);color:var(--lyrics-color);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(60,30,30,0.18);transition:opacity 0.22s var(--ease-smooth), transform 0.22s var(--ease-smooth), background 0.15s var(--ease-smooth);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
-    <iconify-icon icon="mdi:menu" style="font-size:23px;"></iconify-icon>
-  </button>
 
   <!-- Back button (shown when drilling into song/setlist/user) -->
   <button id="home-btn" onclick="goHome()" style="display:none;position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:400;width:46px;height:46px;border-radius:50%;background:var(--surface-1);border:1px solid var(--border-color);color:var(--lyrics-color);cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(60,30,30,0.18);transition:background 0.15s var(--ease-smooth);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
@@ -818,21 +794,8 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
   <!-- header-search-wrap removed: using expandable pill instead -->
 
-  <!-- SIDEBAR DRAWER -->
-  <div id="sidebar-overlay" onclick="closeSidebar()" style="position:fixed;inset:0;background:rgba(8,6,14,0.6);backdrop-filter:blur(2px);z-index:550;opacity:0;pointer-events:none;transition:opacity 0.25s var(--ease-smooth);"></div>
-  <div id="sidebar-drawer" style="position:fixed;top:0;left:0;bottom:0;width:78%;max-width:300px;background:var(--surface-1);border-right:1px solid var(--border-color);z-index:560;transform:translateX(-100%);transition:transform 0.28s var(--ease-smooth), background 0.3s var(--ease-smooth);display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 20px;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:0 4px;">
-      <img src="icons/logo.png" alt="Logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-      <div style="display:none;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#922b21,#c0392b);align-items:center;justify-content:center;">
-        <iconify-icon icon="mdi:music-note" style="font-size:19px;color:#fff;"></iconify-icon>
-      </div>
-      <span id="sidebar-app-name" style="color:var(--lyrics-color);font-size:16px;font-weight:700;">RCCM Gigbook</span>
-    </div>
-    <div id="sidebar-nav" style="display:flex;flex-direction:column;gap:4px;flex:1;"></div>
-  </div>
-
   <!-- MAIN CONTENT AREA -->
-  <div id="main-content" style="flex:1;height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));padding-top:calc(64px + env(safe-area-inset-top,0px));-webkit-overflow-scrolling:touch;opacity:0;">
+  <div id="main-content" style="flex:1;height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));padding-top:calc(64px + env(safe-area-inset-top,0px));-webkit-overflow-scrolling:touch;opacity:0;">
 
 <div id="tab-songs" class="tab-panel active" style="padding:8px var(--view-px);">
     <!-- Tab header -->
@@ -957,126 +920,85 @@ button:active::after { background: rgba(255,255,255,0.12); }
     <div id="setlist-detail-view" style="display:none;"></div>
 
     </div><!-- /tab-setlists -->
-<div id="tab-users" class="tab-panel" style="padding:12px var(--view-px);">
-      <!-- Tab header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px;">
-        <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;letter-spacing:-0.02em;">Team</h1>
-      </div>
-
-      <!-- Admin sub-tabs: Approved / Unapproved -->
-      <div id="users-subtabs" style="display:none;margin-bottom:12px;">
-        <div style="display:flex;gap:4px;background:var(--surface-2);border-radius:var(--radius-pill);padding:4px;">
-          <button id="users-tab-approved-btn" onclick="switchUsersSubTab('approved')"
-            style="flex:1;padding:8px 6px;border-radius:var(--radius-pill);border:none;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.2s var(--ease-smooth);background:linear-gradient(135deg,var(--accent-strong),var(--accent));color:#fff;box-shadow:0 2px 8px var(--accent-glow);">
-            <iconify-icon icon="mdi:account-check" style="font-size:15px;"></iconify-icon>Approved
-          </button>
-          <button id="users-tab-unapproved-btn" onclick="switchUsersSubTab('unapproved')"
-            style="flex:1;padding:8px 6px;border-radius:var(--radius-pill);border:none;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.2s var(--ease-smooth);background:transparent;color:var(--text-secondary);">
-            <iconify-icon icon="mdi:account-clock" style="font-size:15px;"></iconify-icon>Pending
-            <span id="unapproved-count-badge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;padding:1px 6px;font-size:10px;font-weight:800;min-width:16px;text-align:center;"></span>
-          </button>
-        </div>
-      </div>
-
-      <div id="users-list-panel">
-      <div class="search-row">
-        <iconify-icon icon="mdi:magnify" class="search-icon"></iconify-icon>
-        <input type="text" class="search-input" placeholder="Search users..." id="user-search-input" oninput="filterUsers()" style="flex:1;" />
-        <button id="user-filter-btn" class="filter-btn" onclick="toggleUserFilterMenu()" style="position:relative;z-index:1;">
-          <iconify-icon icon="mdi:filter" style="font-size:16px;"></iconify-icon>
-          <span id="user-filter-label">All</span>
-        </button>
-      </div>
-      
-<!-- /user-filter-menu -->
-    <div id="users-list" class="users-list-wrap"></div>
-      <div id="users-empty" style="display:none;text-align:center;padding:48px 20px;color:var(--text-muted);">
-        <iconify-icon icon="mdi:account-group-outline" style="font-size:48px;display:block;margin:0 auto 14px;opacity:0.4;"></iconify-icon>
-        <p style="font-size:15px;font-weight:600;margin:0 0 6px;color:var(--text-secondary);">No team members</p>
-        <p style="font-size:13px;margin:0;">Members will appear here once they join.</p>
-      </div>
-      </div><!-- /users-list-panel -->
-      <div id="user-detail-view" style="display:none;"></div>
-    </div><!-- /tab-users -->
 
     <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);">
-      <!-- Sync broadcast toast -->
-      <div id="sync-toast" style="display:none;position:fixed;top:calc(66px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--surface-1);border:1px solid #34d399;border-radius:10px;padding:10px 16px;z-index:9000;align-items:center;gap:8px;min-width:220px;box-shadow:0 4px 20px rgba(0,0,0,0.5);">
-        <div class="spinner" style="width:18px;height:18px;border-width:2px;border-top-color:#34d399;flex-shrink:0;"></div>
-        <span style="color:#34d399;font-size:13px;font-weight:600;">Applying to all users…</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;">Admin Panel</h1>
+        <button onclick="exitAdminMode()" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:#e05555;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
+          Exit Admin
+        </button>
       </div>
       <div id="admin-sections-grid" style="display:flex;flex-direction:column;gap:12px;">
 
-        <!-- APP BRANDING -->
         <button class="admin-section-btn" onclick="openAdminModal('branding')">
           <div class="admin-section-icon"><iconify-icon icon="mdi:image-edit-outline"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title">App Branding</span>
-            <span class="admin-section-sub">Logo & app name</span>
-          </div>
+          <div class="admin-section-text"><span class="admin-section-title">App Branding</span><span class="admin-section-sub">Logo &amp; app name</span></div>
           <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
         </button>
 
-        <!-- GLOBAL SONG LIMIT -->
         <button class="admin-section-btn" onclick="openAdminModal('songlimit')">
           <div class="admin-section-icon"><iconify-icon icon="mdi:music-note-plus"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title">Songs Per Setlist</span>
-            <span class="admin-section-sub">Global default song limit</span>
-          </div>
+          <div class="admin-section-text"><span class="admin-section-title">Songs Per Setlist</span><span class="admin-section-sub">Global default song limit</span></div>
           <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
         </button>
 
-        <!-- DESIGN: CUSTOM THEME + TYPOGRAPHY -->
         <button class="admin-section-btn" onclick="openAdminModal('design')">
           <div class="admin-section-icon"><iconify-icon icon="mdi:palette-swatch-outline"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title">Design</span>
-            <span class="admin-section-sub">Custom theme & typography</span>
-          </div>
+          <div class="admin-section-text"><span class="admin-section-title">Design</span><span class="admin-section-sub">Custom theme &amp; typography</span></div>
           <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
         </button>
 
-        <!-- IMPORT SONGS (ADMIN ONLY) -->
+        <button class="admin-section-btn" id="subadmin-pin-btn" onclick="openAdminModal('subadminpin')" style="display:none;">
+          <div class="admin-section-icon"><iconify-icon icon="mdi:lock-reset"></iconify-icon></div>
+          <div class="admin-section-text"><span class="admin-section-title">Sub-Admin PIN</span><span class="admin-section-sub">Change the sub-admin access PIN</span></div>
+          <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
+        </button>
+
         <button class="admin-section-btn" onclick="openAdminModal('importsongs')">
           <div class="admin-section-icon"><iconify-icon icon="mdi:file-import-outline"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title">Import Songs</span>
-            <span class="admin-section-sub">Bulk add songs from a file</span>
-          </div>
+          <div class="admin-section-text"><span class="admin-section-title">Import Songs</span><span class="admin-section-sub">Bulk add songs from a file</span></div>
           <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
         </button>
 
-        <!-- SETLIST EXPIRY -->
-        <button class="admin-section-btn" onclick="openAdminModal('setlistttl')">
-          <div class="admin-section-icon"><iconify-icon icon="mdi:clock-remove-outline"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title">Setlist Expiry</span>
-            <span class="admin-section-sub">Auto-delete old setlists</span>
-          </div>
-          <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
-        </button>
-
-        <!-- DANGER ZONE -->
         <button class="admin-section-btn danger" onclick="openAdminModal('dangerzone')">
           <div class="admin-section-icon"><iconify-icon icon="mdi:alert-octagon"></iconify-icon></div>
-          <div class="admin-section-text">
-            <span class="admin-section-title" style="color:#e05555;">Danger Zone</span>
-            <span class="admin-section-sub">Delete all setlists</span>
-          </div>
+          <div class="admin-section-text"><span class="admin-section-title" style="color:#e05555;">Danger Zone</span><span class="admin-section-sub">Delete setlists or songs</span></div>
           <iconify-icon icon="mdi:chevron-right" class="admin-section-chevron"></iconify-icon>
         </button>
 
       </div>
-<!-- PROFILE TAB -->
-
     </div>
+
+  </div><!-- /main-content -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav" style="position:fixed;bottom:0;left:0;right:0;z-index:400;background:var(--surface-1);border-top:1px solid var(--border-color);display:flex;align-items:stretch;height:calc(60px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">
+    <button id="bnav-songs" onclick="switchTab('songs')" class="bnav-btn active">
+      <iconify-icon icon="mdi:music-note" class="bnav-icon"></iconify-icon>
+      <span class="bnav-label">Songs</span>
+    </button>
+    <button id="bnav-setlists" onclick="switchTab('setlists')" class="bnav-btn">
+      <iconify-icon icon="mdi:playlist-music" class="bnav-icon"></iconify-icon>
+      <span class="bnav-label">Setlists</span>
+    </button>
+    <button id="bnav-admin" onclick="switchTab('admin')" class="bnav-btn" style="display:none;">
+      <iconify-icon icon="mdi:shield-crown" class="bnav-icon"></iconify-icon>
+      <span class="bnav-label">Admin</span>
+    </button>
+  </nav>
+
+  <!-- ROLE/ADMIN BADGE (top-left of screen) -->
+  <div id="role-badge" style="display:none;position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:399;background:var(--accent-glow);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;pointer-events:none;">
+    <iconify-icon id="role-badge-icon" icon="mdi:shield-crown" style="font-size:13px;color:var(--accent-soft);"></iconify-icon>
+    <span id="role-badge-label" style="font-size:11px;font-weight:700;color:var(--accent-soft);letter-spacing:0.03em;"></span>
+  </div>
+
 
 <!-- ============================================================ -->
 <!-- ADMIN SECTION MODALS -->
 <!-- ============================================================ -->
 
-<!-- APP BRANDING MODAL -->
+<!-- APP BRANDING -->
 <div id="admin-modal-branding" class="modal-overlay" style="display:none;">
   <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
@@ -1112,7 +1034,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </div>
 </div>
 
-<!-- SONG LIMIT MODAL -->
+<!-- SONG LIMIT -->
 <div id="admin-modal-songlimit" class="modal-overlay" style="display:none;">
   <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
@@ -1143,7 +1065,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </div>
 </div>
 
-<!-- DESIGN MODAL: CUSTOM THEME + TYPOGRAPHY -->
+<!-- DESIGN: CUSTOM THEME + TYPOGRAPHY -->
 <div id="admin-modal-design" class="modal-overlay" style="display:none;">
   <div class="modal-sheet" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
@@ -1338,7 +1260,30 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </div>
 </div>
 
-<!-- IMPORT SONGS MODAL (ADMIN ONLY) -->
+<!-- SUB-ADMIN PIN CHANGE MODAL -->
+<div id="admin-modal-subadminpin" class="modal-overlay" style="display:none;">
+  <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="modal-handle" style="flex-shrink:0;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">
+      <h3 style="color:var(--lyrics-color);font-size:16px;font-weight:700;margin:0;">Sub-Admin PIN</h3>
+      <button onclick="closeAdminModal('subadminpin')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:1.5;">The Sub-Admin PIN grants access to create setlists and add songs without full admin privileges.</p>
+      <div>
+        <label style="color:var(--text-secondary);font-size:11px;display:block;margin-bottom:6px;">New 4-Digit PIN</label>
+        <input id="subadmin-pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="0000"
+          style="width:100%;background:var(--surface-2);border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;font-size:20px;font-weight:700;color:var(--lyrics-color);letter-spacing:0.3em;text-align:center;outline:none;box-sizing:border-box;" />
+      </div>
+      <button onclick="saveSubAdminPin()" class="btn-primary" style="width:100%;">
+        <iconify-icon icon="mdi:content-save" style="font-size:16px;vertical-align:middle;margin-right:6px;"></iconify-icon>
+        Save New PIN
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT SONGS MODAL -->
 <div id="admin-modal-importsongs" class="modal-overlay" style="display:none;">
   <div class="modal-sheet" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
@@ -1347,20 +1292,15 @@ button:active::after { background: rgba(255,255,255,0.12); }
       <button onclick="closeAdminModal('importsongs')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
     </div>
     <div style="overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
-      <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:1.5;">Upload a <strong style="color:var(--lyrics-color);">.json</strong> file containing an array of songs to bulk-add them to the song library. Each song needs at least a <code>title</code>; <code>artist</code>, <code>key</code>, and <code>content</code> (chord sheet text) are optional.</p>
-
+      <p style="color:var(--text-muted);font-size:12px;margin:0;line-height:1.5;">Upload a <strong style="color:var(--lyrics-color);">.json</strong> file to bulk-add songs. Each song needs at least a <code>title</code>.</p>
       <button class="btn-secondary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="downloadSampleSongsFile()">
-        <iconify-icon icon="mdi:download" style="font-size:16px;"></iconify-icon>
-        Download Sample File
+        <iconify-icon icon="mdi:download" style="font-size:16px;"></iconify-icon> Download Sample File
       </button>
-
-      <div class="drag-zone" id="import-songs-drop-zone" onclick="document.getElementById('import-songs-file-input').click()"
-        style="min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div class="drag-zone" id="import-songs-drop-zone" onclick="document.getElementById('import-songs-file-input').click()" style="min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <iconify-icon icon="mdi:file-upload-outline" style="font-size:28px;margin-bottom:6px;"></iconify-icon>
         <p style="margin:0;font-size:13px;">Tap to choose a .json file</p>
         <input type="file" id="import-songs-file-input" accept=".json,application/json" style="display:none;" onchange="handleImportFileSelect(this)" />
       </div>
-
       <div id="import-songs-preview" style="display:none;background:var(--surface-1);border:1px solid var(--border-color);border-radius:12px;padding:12px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <iconify-icon icon="mdi:check-circle" style="font-size:16px;color:#34d399;"></iconify-icon>
@@ -1368,7 +1308,6 @@ button:active::after { background: rgba(255,255,255,0.12); }
         </div>
         <div id="import-songs-list-preview" style="max-height:160px;overflow-y:auto;"></div>
       </div>
-
       <button id="import-songs-confirm-btn" class="btn-primary" style="width:100%;" disabled onclick="confirmImportSongs()">
         <iconify-icon icon="mdi:file-import-outline" style="font-size:16px;vertical-align:middle;margin-right:6px;"></iconify-icon>
         Import Songs
@@ -1377,158 +1316,55 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </div>
 </div>
 
-<!-- SETLIST EXPIRY MODAL -->
-<div id="admin-modal-setlistttl" class="modal-overlay" style="display:none;">
-  <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="modal-handle" style="flex-shrink:0;"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">
-      <h3 style="color:var(--lyrics-color);font-size:16px;font-weight:700;margin:0;">Setlist Expiry</h3>
-      <button onclick="closeAdminModal('setlistttl')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
-    </div>
-    <div style="overflow-y:auto;">
-        <div id="admin-sec-setlistttl">
-          <div style="background:var(--surface-1);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-              <iconify-icon icon="mdi:clock-remove-outline" style="font-size:16px;color:var(--accent-soft);"></iconify-icon>
-              <span class="section-label" style="margin-bottom:0;">Setlist Expiry</span>
-            </div>
-            <p style="color:var(--text-muted);font-size:12px;margin:0;">Setlists older than this many days are automatically deleted on next app load. Default is 7 days.</p>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <input type="number" class="input-field" id="admin-setlist-ttl" value="7" min="1" max="365" style="width:90px;font-size:16px;font-weight:700;text-align:center;padding:8px;" />
-              <span style="color:var(--text-muted);font-size:13px;">days</span>
-            </div>
-            <button class="btn-primary" onclick="saveSetlistTTL()" style="width:100%;">
-              <iconify-icon icon="mdi:content-save" style="font-size:16px;vertical-align:middle;margin-right:6px;"></iconify-icon>
-              Save Expiry
-            </button>
-          </div>
-        </div>
-
-    </div>
-  </div>
-</div>
-
 <!-- DANGER ZONE MODAL -->
 <div id="admin-modal-dangerzone" class="modal-overlay" style="display:none;">
-  <div class="modal-sheet" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="modal-sheet" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">
       <h3 style="color:#e05555;font-size:16px;font-weight:700;margin:0;">Danger Zone</h3>
       <button onclick="closeAdminModal('dangerzone')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
     </div>
     <div style="overflow-y:auto;">
-        <div id="admin-sec-dangerzone">
-          <div style="background:var(--surface-1);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;border:1px solid rgba(220,50,50,0.25);">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-              <iconify-icon icon="mdi:alert-octagon" style="font-size:16px;color:#e05555;"></iconify-icon>
-              <span class="section-label" style="margin-bottom:0;color:#e05555;">Danger Zone</span>
-            </div>
-            <p style="color:var(--text-muted);font-size:12px;margin:0;">Permanently delete <strong style="color:var(--lyrics-color);">all setlists</strong> from the database. A confirmation code will be sent to your admin email before this action runs.</p>
-            <button onclick="initiateDeleteAllSetlists()" style="width:100%;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.2s;">
-              <iconify-icon icon="mdi:delete-sweep" style="font-size:18px;"></iconify-icon>
-              Delete All Setlists
-            </button>
-          </div>
+      <div id="admin-sec-dangerzone">
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button id="dz-tab-setlists" onclick="switchDangerTab('setlists')" style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid var(--accent);background:var(--accent-glow);color:var(--accent);transition:all 0.15s;">Setlists</button>
+          <button id="dz-tab-songs" onclick="switchDangerTab('songs')" style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid var(--border-color);background:transparent;color:var(--text-secondary);transition:all 0.15s;">Songs</button>
         </div>
+        <div id="dz-panel-setlists">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:var(--text-muted);font-size:12px;" id="dz-setlists-count">0 setlists</span>
+            <div style="display:flex;gap:6px;">
+              <button onclick="dzSelectAll('setlists')" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent);border-radius:7px;padding:4px 10px;cursor:pointer;">All</button>
+              <button onclick="dzDeselectAll('setlists')" style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-color);border-radius:7px;padding:4px 10px;cursor:pointer;">None</button>
+            </div>
+          </div>
+          <div id="dz-setlists-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
+          <div id="dz-setlists-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No setlists found.</div>
+          <button onclick="dzDeleteSelected('setlists')" id="dz-delete-setlists-btn" disabled style="width:100%;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
+            <iconify-icon icon="mdi:delete-sweep" style="font-size:18px;"></iconify-icon>
+            <span id="dz-delete-setlists-label">Delete Selected Setlists</span>
+          </button>
+        </div>
+        <div id="dz-panel-songs" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:var(--text-muted);font-size:12px;" id="dz-songs-count">0 songs</span>
+            <div style="display:flex;gap:6px;">
+              <button onclick="dzSelectAll('songs')" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent);border-radius:7px;padding:4px 10px;cursor:pointer;">All</button>
+              <button onclick="dzDeselectAll('songs')" style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-color);border-radius:7px;padding:4px 10px;cursor:pointer;">None</button>
+            </div>
+          </div>
+          <div id="dz-songs-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
+          <div id="dz-songs-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No songs found.</div>
+          <button onclick="dzDeleteSelected('songs')" id="dz-delete-songs-btn" disabled style="width:100%;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
+            <iconify-icon icon="mdi:delete-sweep" style="font-size:18px;"></iconify-icon>
+            <span id="dz-delete-songs-label">Delete Selected Songs</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-
-<div id="tab-profile" class="tab-panel" style="padding:12px var(--view-px);">
-
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-    <div style="width:36px;flex-shrink:0;">
-      <button id="profile-close-btn" onclick="closeProfileView();" style="display:none;background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:10px;cursor:pointer;align-items:center;padding:8px;color:var(--text-secondary);transition:background 0.15s var(--ease-smooth);" title="Close">
-        <iconify-icon icon="mdi:arrow-left" style="font-size:20px;"></iconify-icon>
-      </button>
-    </div>
-    <h2 style="color:var(--lyrics-color);font-size:18px;font-weight:700;margin:0;">My Profile</h2>
-    <div style="width:36px;flex-shrink:0;display:flex;justify-content:flex-end;">
-      <button id="profile-admin-btn" onclick="switchTab('admin');" style="display:none;background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:10px;cursor:pointer;align-items:center;padding:8px;color:var(--text-secondary);transition:background 0.15s var(--ease-smooth);" title="Admin Panel">
-        <iconify-icon icon="mdi:cog" style="font-size:20px;"></iconify-icon>
-      </button>
-    </div>
-  </div>
-
-  <!-- ── IDENTITY CARD ───────────────────────── -->
-  <div style="background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-card);padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:16px;">
-    <!-- Avatar -->
-    <div style="position:relative;margin-bottom:14px;">
-      <div id="profile-avatar-wrap" style="width:84px;height:84px;border-radius:50%;background:var(--surface-2);border:3px solid var(--accent);box-shadow:0 0 0 5px var(--accent-glow);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;">
-        <img id="profile-view-pic" src="" alt="Profile" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" />
-        <iconify-icon id="profile-view-placeholder" icon="mdi:account" style="font-size:42px;color:var(--text-muted);position:relative;z-index:1;"></iconify-icon>
-      </div>
-    </div>
-    <!-- Name + edit -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-      <span id="profile-view-name" style="color:var(--lyrics-color);font-size:18px;font-weight:700;letter-spacing:0.01em;"></span>
-      <button onclick="openNameEditModal()" title="Edit name" style="background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--accent);transition:background 0.15s var(--ease-smooth);">
-        <iconify-icon icon="mdi:pencil" style="font-size:14px;"></iconify-icon>
-      </button>
-    </div>
-    <!-- Role + instruments -->
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
-      <span id="profile-view-role-badge"></span>
-      <span id="profile-view-instruments-inline" style="color:var(--text-secondary);font-size:12px;"></span>
-    </div>
-  </div>
-
-  <!-- ── PREFERENCES ─────────────────────────── -->
-  <div class="section-label" style="margin-bottom:8px;padding-left:2px;">Preferences</div>
-  <div style="background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-card);overflow:hidden;margin-bottom:16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <iconify-icon icon="mdi:book-open-page-variant" style="font-size:18px;color:var(--text-muted);"></iconify-icon>
-        <div>
-          <div style="color:var(--lyrics-color);font-size:14px;font-weight:600;">Tutorial on Song Open</div>
-          <div style="color:var(--text-muted);font-size:11px;margin-top:1px;">Show chord sheet tips when opening a song</div>
-        </div>
-      </div>
-      <label class="toggle-switch" style="flex-shrink:0;">
-        <input type="checkbox" id="tutorial-toggle" checked onchange="saveTutorialPref(this.checked)" />
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-  </div>
-
-  <!-- ── MY SETLISTS ─────────────────────────── -->
-  <div class="section-label" style="margin-bottom:8px;padding-left:2px;">My Setlists</div>
-  <div style="margin-bottom:16px;">
-    <div id="profile-my-setlists" class="setlists-list-wrap"></div>
-    <div id="profile-setlists-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-card);">No setlists created yet.</div>
-  </div>
-
-  <!-- ── UPDATE BANNER ──────────────────────── -->
-  <div id="profile-update-banner" style="display:none;margin-bottom:12px;">
-    <button onclick="showUpdateModal(window._pendingUpdateVersion||'')"
-      style="width:100%;background:linear-gradient(135deg,#065f46,#047857);border:1px solid #34d399;color:#d1fae5;border-radius:var(--radius-card);padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity 0.2s;animation:pulseGreen 2s ease-in-out infinite;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-      <iconify-icon icon="mdi:update" style="font-size:20px;"></iconify-icon>
-      Update Available — Tap to Reload
-    </button>
-  </div>
-
-  <!-- ── ACCOUNT ────────────────────────────── -->
-  <div class="section-label" style="margin-bottom:8px;padding-left:2px;">Account</div>
-  <div style="background:var(--surface-1);border:1px solid var(--border-color);border-radius:var(--radius-card);overflow:hidden;margin-bottom:8px;">
-    <button onclick="signOut()" style="width:100%;background:transparent;border:none;display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;text-align:left;transition:background 0.15s var(--ease-smooth);" onmouseover="this.style.background='rgba(220,50,50,0.08)'" onmouseout="this.style.background='transparent'">
-      <div style="width:36px;height:36px;border-radius:10px;background:rgba(220,50,50,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <iconify-icon icon="mdi:logout" style="font-size:18px;color:#e05555;"></iconify-icon>
-      </div>
-      <div style="flex:1;">
-        <div style="color:#e05555;font-size:14px;font-weight:700;">Sign Out</div>
-        <div style="color:var(--text-muted);font-size:11px;margin-top:1px;" id="profile-signed-in-as"></div>
-      </div>
-      <iconify-icon icon="mdi:chevron-right" style="font-size:20px;color:var(--text-muted);"></iconify-icon>
-    </button>
-  </div>
-
-</div><!-- /tab-profile -->
-
-  </div><!-- /main-content -->
-
-  <!-- navigation via hamburger sidebar -->
 </div><!-- /app-root -->
 
 <!-- FAB — Create Setlist or Add Song (context-aware) -->
@@ -2013,7 +1849,19 @@ const CHROMATIC_SCALE = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const ENHARMONIC_MAP = { 'Db':'C#','Eb':'D#','Fb':'E','Gb':'F#','Ab':'G#','Bb':'A#','Cb':'B' };
 
 let currentUser = null;
-let currentUserProfile = null;
+let currentUserProfile = null; // kept for legacy refs, mapped to appRole
+// ── New role system ───────────────────────────────────────
+let appRole = 'viewer';       // 'viewer' | 'subadmin' | 'admin'
+let viewerType = '';          // 'musician' | 'singer' | 'tech'
+const SERVICE_EMAIL = 'gigbook-service@rccm.app';
+const SERVICE_PASS  = 'GigBook@RCCM2025';
+const ADMIN_PIN     = '0597';
+let _subAdminPin    = '0000'; // overridden from Firestore
+let _logoPinTaps    = 0;
+let _logoPinTimer   = null;
+// ── Compat shim so old currentUserProfile.role checks still work ──
+function _roleShim() { return appRole === 'admin' ? 'Admin' : appRole === 'subadmin' ? 'Sub-Admin' : 'Guest'; }
+
 let activeTab = 'songs';
 let allSongs = [];
 let allSetlists = [];
@@ -2136,316 +1984,64 @@ window.addEventListener('pageshow', () => {
   closeAllDropdowns();
 });
 
-auth.onAuthStateChanged(async (user) => {
-  clearTimeout(_splashTimer); // Cancel fallback timer
-  if (_signingOut) return;    // Ignore during explicit sign-out
-  if (user) {
-    currentUser = user;
+auth.onAuthStateChanged((user) => {
+  currentUser = user;
+  // Always boot straight to app — role picker handles first-run
+  clearTimeout(_splashTimer);
+  bootApp();
+});
+
+async function bootApp() {
+  // Load Sub-Admin PIN from Firestore (best-effort, non-blocking)
+  try {
+    const snap = await db.collection('settings').doc('global').get();
+    if (snap.exists && snap.data().subAdminPin) _subAdminPin = snap.data().subAdminPin;
+    if (snap.exists && snap.data().adminPin)    ADMIN_PIN_OVERRIDE = snap.data().adminPin; // future-proof
+  } catch(e) { /* offline — use defaults */ }
+
+  // Check localStorage for saved viewer role
+  const savedRole = localStorage.getItem('gb_viewer_type');
+  const savedAppRole = localStorage.getItem('gb_app_role');
+  if (savedAppRole === 'admin' || savedAppRole === 'subadmin') {
+    // Re-authenticate silently
     try {
-      await initApp(user);
-    } catch(err) {
-      console.error('initApp error:', err);
-      currentUser = null;
-      showAuthView();
-    }
-  } else {
-    currentUser = null;
-    currentUserProfile = null;
-    showAuthView();
-  }
-});
-
-function showPendingApprovalScreen() {
-  document.getElementById('splash-screen').style.display = 'none';
-  document.getElementById('auth-view').style.display = 'none';
-  const screen = document.getElementById('pending-approval-screen');
-  screen.style.display = 'flex';
-  const emailEl = document.getElementById('pending-user-email');
-  if (emailEl && currentUserProfile?.email) emailEl.textContent = 'Signed in as: ' + currentUserProfile.email;
-}
-
-function proceedAsGuest() {
-  document.getElementById('pending-approval-screen').style.display = 'none';
-  mountApp();
-}
-
-function showAuthView() {
-  document.getElementById('splash-screen').style.display = 'none';
-  document.getElementById('app-root').style.display = 'none';
-  // Defensive: a dropdown (e.g. the role filter menu) left open from a previous
-  // session/DOM state can otherwise render on top of this screen since it shares
-  // the same z-index as the splash screen and comes later in the DOM.
-  closeAllDropdowns();
-  
-  const authView = document.getElementById('auth-view');
-  authView.style.display = 'flex';
-  authView.classList.add('fade-in');
-  // Reset Google sign-in button to original state (fix stuck loading)
-  const signInBtn = document.getElementById('google-signin-btn');
-  if (signInBtn) {
-    signInBtn.disabled = false;
-    signInBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Sign In with Google`;
-  }
-  // Show previously used account chip
-  try {
-    const prev = JSON.parse(localStorage.getItem('rccm_prev_account') || 'null');
-    const chip = document.getElementById('prev-account-chip');
-    if (prev && prev.email && chip) {
-      const picHtml = prev.photoURL
-        ? `<img src="${escHtml(prev.photoURL)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--surface-2')" />`
-        : `<div style="width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><iconify-icon icon="mdi:account" style="font-size:18px;color:var(--text-secondary);"></iconify-icon></div>`;
-      chip.innerHTML = `
-        <p style="color:var(--text-muted);font-size:11px;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.08em;">Previously used</p>
-        <button onclick="quickSignIn()" style="display:flex;align-items:center;gap:10px;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;padding:10px 14px;cursor:pointer;width:100%;max-width:320px;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='var(--surface-1)'">
-          ${picHtml}
-          <div style="flex:1;min-width:0;">
-            <p style="color:var(--lyrics-color);font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(prev.displayName||'Unknown')}</p>
-            <p style="color:var(--text-muted);font-size:11px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(prev.email)}</p>
-          </div>
-          <iconify-icon icon="mdi:chevron-right" style="font-size:18px;color:var(--text-muted);flex-shrink:0;"></iconify-icon>
-        </button>`;
-      chip.style.display = 'flex';
-      chip.style.flexDirection = 'column';
-      chip.style.alignItems = 'center';
-      chip.style.width = '100%';
-      chip.style.maxWidth = '320px';
-    } else if (chip) {
-      chip.style.display = 'none';
-    }
-  } catch(e) { console.error(e); }
-}
-async function quickSignIn() {
-  // Get the hint email from localStorage to skip account chooser
-  let hintEmail = '';
-  try {
-    const prev = JSON.parse(localStorage.getItem('rccm_prev_account') || 'null');
-    hintEmail = prev?.email || '';
-  } catch(e) {}
-
-  const chip = document.getElementById('prev-account-chip');
-  if (chip) chip.innerHTML = '<div class="spinner" style="width:24px;height:24px;margin:8px auto;"></div>';
-
-  const provider = new firebase.auth.GoogleAuthProvider();
-  // Set login_hint so Google skips the account picker for this email
-  if (hintEmail) provider.setCustomParameters({ login_hint: hintEmail });
-
-  try {
-    const result = await auth.signInWithPopup(provider);
-    if (result.user) {
-      localStorage.setItem('rccm_prev_account', JSON.stringify({
-        displayName: result.user.displayName || '',
-        email: result.user.email || '',
-        photoURL: result.user.photoURL || ''
-      }));
-    }
-    document.getElementById('auth-error').style.display = 'none';
-  } catch (err) {
-    console.error('Quick sign-in error:', err);
-    const errEl = document.getElementById('auth-error');
-    errEl.textContent = err.message || 'Sign-in failed. Please try again.';
-    errEl.style.display = 'block';
-    // Restore chip
-    showAuthView();
-  }
-}
-
-async function initApp(user) {
-  // Hide auth view, keep splash during load
-  document.getElementById('auth-view').style.display = 'none';
-  try {
-    let profileSnap = await db.collection('users').doc(user.uid).get();
-    if (!profileSnap.exists) {
-      if (user.email === ADMIN_EMAIL) {
-        await db.collection('users').doc(user.uid).set({
-          uid: user.uid, email: user.email, displayName: user.displayName,
-          photoURL: user.photoURL, role: 'Admin', roles: ['Admin'], instruments: [],
-          canAddSongs: true, canDeleteSongs: true, createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          showTutorial: true, maxSetlistsOverride: null, approved: true, abilities: []
-        });
-        profileSnap = await db.collection('users').doc(user.uid).get();
-        currentUserProfile = profileSnap.data();
-        mountApp();
-      } else {
-        // New user → assign Guest role, mark as unapproved, show pending screen
-        const profileData = {
-          uid: user.uid, email: user.email,
-          displayName: user.displayName, photoURL: user.photoURL,
-          role: 'Guest', roles: ['Guest'], instruments: [],
-          canAddSongs: false, canDeleteSongs: false,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          showTutorial: true, maxSetlistsOverride: null, approved: false, abilities: []
-        };
-        await db.collection('users').doc(user.uid).set(profileData);
-        currentUserProfile = profileData;
-        showPendingApprovalScreen();
-      }
-    } else {
-      currentUserProfile = profileSnap.data();
-      if (user.email === ADMIN_EMAIL && currentUserProfile.role !== 'Admin') {
-        await db.collection('users').doc(user.uid).update({ role: 'Admin', roles: ['Admin'], approved: true });
-        currentUserProfile.role = 'Admin';
-        currentUserProfile.roles = ['Admin'];
-        currentUserProfile.approved = true;
-      }
-      // Guest not yet approved → show pending screen
-      if (!currentUserProfile.approved && currentUserProfile.role === 'Guest' && user.email !== ADMIN_EMAIL) {
-        showPendingApprovalScreen();
-        return;
-      }
+      if (!currentUser) await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+      appRole    = savedAppRole;
+      viewerType = savedAppRole; // admins see full chords
+      currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
       mountApp();
-    }
-  } catch (err) {
-    console.error('initApp error:', err);
-    showAuthView();
+      return;
+    } catch(e) { localStorage.removeItem('gb_app_role'); }
   }
-}
-
-// ============================================================
-// GOOGLE SIGN IN / SIGN OUT
-// ============================================================
-const _gSignInBtn = document.getElementById('google-signin-btn');
-if (_gSignInBtn) _gSignInBtn.addEventListener('click', async () => {
-  const btn = document.getElementById('google-signin-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;margin:0 auto;"></div>';
-  const provider = new firebase.auth.GoogleAuthProvider();
-  try {
-    const result = await auth.signInWithPopup(provider);
-    // Save account info for quick re-sign-in chip
-    if (result.user) {
-      localStorage.setItem('rccm_prev_account', JSON.stringify({
-        displayName: result.user.displayName || '',
-        email: result.user.email || '',
-        photoURL: result.user.photoURL || ''
-      }));
-    }
-    document.getElementById('auth-error').style.display = 'none';
-  } catch (err) {
-    console.error('Sign-in error:', err);
-    const errEl = document.getElementById('auth-error');
-    errEl.textContent = err.message || 'Sign-in failed. Please try again.';
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Sign In with Google`;
-  }
-});
-
-function signOut() {
-  if (_signingOut) return;
-  _signingOut = true;
-  stopAutoScroll();
-  if (songsUnsubscribe) { songsUnsubscribe(); songsUnsubscribe = null; }
-  if (setlistsUnsubscribe) { setlistsUnsubscribe(); setlistsUnsubscribe = null; }
-  if (usersUnsubscribe) { usersUnsubscribe(); usersUnsubscribe = null; }
-  if (adminSettingsUnsubscribe) { adminSettingsUnsubscribe(); adminSettingsUnsubscribe = null; }
-  allSongs = []; allSetlists = []; allUsers = [];
-  currentUser = null; currentUserProfile = null;
-  currentSongId = null; currentSetlistId = null; currentDetailUserId = null;
-  openedFromSetlist = false; _setlistOpenedFromUserDetail = null;
-  const _dotEl2 = document.getElementById('setlist-dot-indicator');
-  if (_dotEl2) { _dotEl2.style.display = 'none'; _dotEl2.innerHTML = ''; }
-  // ── Reset tab state so the next user always starts on Songs ──
-  activeTab = 'songs';
-  // Reset all tab panels back to initial state
-  document.querySelectorAll('.tab-panel').forEach(p => {
-    p.classList.remove('active');
-  });
-  const songsPanel = document.getElementById('tab-songs');
-  if (songsPanel) { songsPanel.classList.add('active'); }
-  // Close any open views within tabs
-  const songSheet = document.getElementById('song-sheet-view');
-  if (songSheet) songSheet.style.display = 'none';
-  const songsListView = document.getElementById('songs-list-view');
-  if (songsListView) songsListView.style.display = 'block';
-  const setlistDetail = document.getElementById('setlist-detail-view');
-  if (setlistDetail) setlistDetail.style.display = 'none';
-  const setlistsListView = document.getElementById('setlists-list-view');
-  if (setlistsListView) setlistsListView.style.display = 'block';
-  const userDetail = document.getElementById('user-detail-view');
-  if (userDetail) userDetail.style.display = 'none';
-  const usersListPanel = document.getElementById('users-list-panel');
-  if (usersListPanel) usersListPanel.style.display = 'block';
-  // Close any open modals
-  ['create-song-modal','create-setlist-modal','user-edit-modal','key-modal',
-   'song-selector-modal','manage-members-modal','alert-modal','setlist-limit-modal',
-   'tutorial-modal','name-edit-modal'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  // Reset nav — sidebar rebuilt on next login
-  firebase.auth().signOut().then(() => {
-    _signingOut = false;
-    // onAuthStateChanged ignores this transition (guarded by _signingOut while the
-    // promise was pending), so explicitly show the sign-in screen here.
-    showAuthView();
-  }).catch(err => {
-    _signingOut = false;
-    console.error('Sign out error:', err);
-  });
-}
-
-// ============================================================
-// ONBOARDING
-// ============================================================
-let selectedOnboardingRole = null;
-function showOnboarding() {
-  const modal = document.getElementById('onboarding-modal');
-  modal.style.display = 'flex';
-}
-function selectOnboardingRole(role) {
-  selectedOnboardingRole = role;
-  document.querySelectorAll('#onboarding-role-selector .onboarding-btn').forEach(b => b.classList.remove('selected'));
-  const btns = document.querySelectorAll('#onboarding-role-selector .onboarding-btn');
-  btns.forEach(b => { if (b.textContent.trim().includes(role)) b.classList.add('selected'); });
-  const musicianOpts = document.getElementById('musician-options');
-  musicianOpts.style.display = role === 'Musician' ? 'block' : 'none';
-  document.getElementById('onboarding-confirm-btn').style.display = 'block';
-}
-async function confirmOnboarding() {
-  if (!selectedOnboardingRole || !currentUser) return;
-  const instruments = [];
-  if (document.getElementById('ob-guitar').checked) instruments.push('Guitar');
-  if (document.getElementById('ob-keyboard').checked) instruments.push('Keyboard');
-  if (document.getElementById('ob-djembe').checked) instruments.push('Djembe');
-  // Require at least one instrument for Musician role
-  if (selectedOnboardingRole === 'Musician' && instruments.length === 0) {
-    const errEl = document.getElementById('ob-instrument-error');
-    if (errEl) { errEl.style.display = 'block'; errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    return;
-  }
-  if (document.getElementById('ob-instrument-error')) document.getElementById('ob-instrument-error').style.display = 'none';
-  const profileData = {
-    uid: currentUser.uid, email: currentUser.email,
-    displayName: currentUser.displayName, photoURL: currentUser.photoURL,
-    role: 'Guest', roles: ['Guest'], instruments,
-    canAddSongs: false, canDeleteSongs: false,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    showTutorial: true, maxSetlistsOverride: null,
-    approved: false, abilities: []
-  };
-  if (selectedOnboardingRole === 'Musician') {
-    profileData.canSing = document.getElementById('ob-can-sing').checked;
-    profileData.isAlsoTech = document.getElementById('ob-is-tech').checked;
-  }
-  try {
-    await db.collection('users').doc(currentUser.uid).set(profileData);
-    currentUserProfile = profileData;
-    document.getElementById('onboarding-modal').style.display = 'none';
+  if (savedRole) {
+    viewerType = savedRole;
+    appRole    = 'viewer';
+    currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
     mountApp();
-  } catch (err) {
-    console.error('Onboarding save error:', err);
+  } else {
+    showRolePicker();
   }
 }
+
+function exitAdminMode() {
+  appRole    = 'viewer';
+  const savedType = localStorage.getItem('gb_viewer_type') || 'musician';
+  viewerType = savedType;
+  localStorage.removeItem('gb_app_role');
+  currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
+  firebase.auth().signOut().catch(() => {});
+  updateRoleBadge();
+  buildBottomNav();
+  updateFAB();
+}
+function signOut() { exitAdminMode(); } // compat alias
 
 // ============================================================
 // APP MOUNT
 // ============================================================
 function mountApp() {
   document.getElementById('splash-screen').style.display = 'none';
-  document.getElementById('auth-view').style.display = 'none';
-  document.getElementById('onboarding-modal').style.display = 'none';
-  const pendingScreen = document.getElementById('pending-approval-screen');
-  if (pendingScreen) pendingScreen.style.display = 'none';
+  document.getElementById('role-picker-screen').style.display = 'none';
   // Defensive: close any dropdown (e.g. role filter menu) left open from a
   // previous DOM/session state before it can render on top of the app.
   closeAllDropdowns();
@@ -2456,20 +2052,14 @@ function mountApp() {
   // Fade in only main-content to avoid the fixed-position bug
   const mainContent = document.getElementById('main-content');
   if (mainContent) { mainContent.style.opacity = '0'; mainContent.style.transition = 'none'; }
-  document.getElementById('top-profile-pic') && (document.getElementById('top-profile-pic').src = currentUserProfile.photoURL || '');
-
-  const role = currentUserProfile?.role || 'Guest';
-  const isGuest = role === 'Guest';
-
-  // Guest starts on setlists, others on songs
-  if (isGuest) {
-    activeTab = 'setlists';
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    const setlistsPanel = document.getElementById('tab-setlists');
-    if (setlistsPanel) setlistsPanel.classList.add('active');
+  // Apply lyrics-only for singers and tech
+  if (viewerType === 'singer' || viewerType === 'tech') {
+    lyricsOnlyMode = true;
+    const btn = document.getElementById('lyrics-only-toggle-btn');
+    if (btn) btn.style.display = 'none';
   }
-
-  buildNav();
+  buildBottomNav();
+  updateRoleBadge();
   setupListeners();
   checkDesktop();
   pushState();
@@ -2575,9 +2165,7 @@ function openSidebar() {
   actions.style.opacity = '0';
   actions.style.transform = 'translateX(16px)';
   actions.style.pointerEvents = 'none';
-  const hamburger = document.getElementById('hamburger-btn');
-  if (hamburger) hamburger.style.opacity = '0.4';
-  // Blur and disable any visible FAB so it can't be tapped behind the sidebar
+  // Blur and disable any visible FAB
   ['fab-btn', 'add-song-fab', 'autoscroll-fab', 'autoscroll-reshow-btn'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -2596,8 +2184,7 @@ function closeSidebar() {
   actions.style.opacity = '1';
   actions.style.transform = 'translateX(0)';
   actions.style.pointerEvents = 'auto';
-  const hamburger = document.getElementById('hamburger-btn');
-  if (hamburger) hamburger.style.opacity = '1';
+
   // Restore FABs
   ['fab-btn', 'add-song-fab', 'autoscroll-fab', 'autoscroll-reshow-btn'].forEach(id => {
     const el = document.getElementById(id);
@@ -2681,111 +2268,23 @@ function syncHeaderFilterDot() {
   }
 }
 
-function buildNav() {
-  const role = currentUserProfile?.role || 'Guest';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const photoURL = escHtml(currentUserProfile?.photoURL || '');
-  const displayName = escHtml(currentUserProfile?.displayName || 'My Profile');
-  const firstName = displayName.split(' ')[0] || 'Profile';
-  const isGuest = role === 'Guest';
-
-  // Update hamburger vs profile button for Guest
-  const hamburgerBtn = document.getElementById('hamburger-btn');
-  if (hamburgerBtn) {
-    if (isGuest) {
-      if (photoURL) {
-        const img = document.createElement('img');
-        img.src = photoURL;
-        img.style.cssText = 'width:30px;height:30px;border-radius:50%;object-fit:cover;';
-        img.onerror = function() { this.replaceWith(Object.assign(document.createElement('iconify-icon'), {icon:'mdi:account-circle', style:'font-size:26px;'})); };
-        hamburgerBtn.innerHTML = '';
-        hamburgerBtn.appendChild(img);
-      } else {
-        hamburgerBtn.innerHTML = '<iconify-icon icon="mdi:account-circle" style="font-size:26px;"></iconify-icon>';
-      }
-      hamburgerBtn.title = 'My Profile';
-      hamburgerBtn.onclick = () => openProfileView();
-    } else {
-      hamburgerBtn.innerHTML = '<iconify-icon icon="mdi:menu" style="font-size:23px;"></iconify-icon>';
-      hamburgerBtn.title = 'Menu';
-      hamburgerBtn.onclick = () => toggleSidebar();
-    }
-  }
-
-  // Determine visible tabs
-  let mainTabs = [];
-  if (!isGuest) mainTabs.push({ id: 'songs', icon: 'mdi:music-note', label: 'Songs' });
-  mainTabs.push({ id: 'setlists', icon: 'mdi:playlist-music', label: 'Setlists' });
-
-  const canSeeUsers = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    abilities.includes('viewApprovedUsers') || abilities.includes('viewUnapprovedUsers');
-  if (!isGuest && canSeeUsers) mainTabs.push({ id: 'users', icon: 'mdi:account-group', label: 'Team' });
-
-  const isAdmin = roles.includes('Admin');
-  const sidebarNav = document.getElementById('sidebar-nav');
-  if (!sidebarNav) return;
-
-  if (isGuest) { sidebarNav.innerHTML = ''; return; }
-
-  // Main nav items
-  const mainHtml = mainTabs.map(t => {
-    const isActive = t.id === activeTab;
-    const activeBg = isActive ? 'var(--accent-glow)' : 'transparent';
-    const activeColor = isActive ? 'var(--accent-soft)' : 'var(--text-secondary)';
-    const dotHtml = isActive ? '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:auto;flex-shrink:0;box-shadow:0 0 6px var(--accent);"></span>' : '';
-    return '<button id="sidebar-nav-' + t.id + '" onclick="switchTab(\'' + t.id + '\');closeSidebar();"'
-      + ' style="display:flex;align-items:center;gap:12px;background:' + activeBg + ';border:none;color:' + activeColor + ';cursor:pointer;padding:11px 14px;border-radius:12px;width:100%;text-align:left;transition:background 0.15s;">'
-      + '<iconify-icon icon="' + t.icon + '" style="font-size:20px;flex-shrink:0;"></iconify-icon>'
-      + '<span style="font-size:14px;font-weight:' + (isActive ? '700' : '500') + ';">' + t.label + '</span>'
-      + dotHtml
-      + '</button>';
-  }).join('');
-
-  // Profile row
-  const profileActive = activeTab === 'profile';
-  const adminActive = activeTab === 'admin';
-  const avatarHtml = photoURL
-    ? '<img src="' + photoURL + '" id="sidebar-avatar-img" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid ' + (profileActive ? 'var(--accent)' : 'var(--border-subtle)') + ';flex-shrink:0;" />'
-    : '<div style="width:34px;height:34px;border-radius:50%;background:var(--surface-2);border:2px solid ' + (profileActive ? 'var(--accent)' : 'var(--border-subtle)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><iconify-icon icon="mdi:account" style="font-size:18px;color:var(--text-secondary);"></iconify-icon></div>';
-
-  const adminBtnHtml = isAdmin
-    ? '<button id="sidebar-nav-admin" onclick="switchTab(\'admin\');closeSidebar();" title="Admin Panel"'
-      + ' style="width:38px;height:38px;border-radius:50%;background:' + (adminActive ? 'var(--accent-glow)' : 'var(--surface-2)') + ';border:1px solid ' + (adminActive ? 'var(--accent)' : 'var(--border-subtle)') + ';color:' + (adminActive ? 'var(--accent-soft)' : 'var(--text-secondary)') + ';cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;">'
-      + '<iconify-icon icon="mdi:shield-crown" style="font-size:18px;"></iconify-icon></button>'
-    : '';
-
-  const profileHtml = '<div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border-color);">'
-    + '<div style="display:flex;align-items:center;gap:4px;">'
-    + '<button id="sidebar-nav-profile" onclick="switchTab(\'profile\');closeSidebar();"'
-    + ' style="flex:1;display:flex;align-items:center;gap:10px;background:' + (profileActive ? 'var(--accent-glow)' : 'transparent') + ';border:none;color:' + (profileActive ? 'var(--accent-soft)' : 'var(--text-secondary)') + ';cursor:pointer;padding:10px;border-radius:12px;text-align:left;transition:background 0.15s;">'
-    + avatarHtml
-    + '<div style="flex:1;min-width:0;">'
-    + '<p style="margin:0;font-size:13px;font-weight:' + (profileActive ? '700' : '600') + ';color:' + (profileActive ? 'var(--accent-soft)' : 'var(--lyrics-color)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + firstName + '</p>'
-    + '</div></button>'
-    + adminBtnHtml
-    + '</div></div>';
-
-  sidebarNav.innerHTML = mainHtml + profileHtml;
-
-  // Fix broken img onerror for sidebar avatar
-  if (photoURL) {
-    const avatarImg = document.getElementById('sidebar-avatar-img');
-    if (avatarImg) {
-      avatarImg.onerror = function() {
-        this.style.display = 'none';
-      };
-    }
+function buildNav() { buildBottomNav(); } // compat alias
+function buildBottomNav() {
+  const isPrivileged = (appRole === 'admin' || appRole === 'subadmin');
+  const tabs = ['songs','setlists'];
+  tabs.forEach(id => {
+    const btn = document.getElementById('bnav-' + id);
+    if (!btn) return;
+    btn.classList.toggle('active', activeTab === id);
+  });
+  const adminBtn = document.getElementById('bnav-admin');
+  if (adminBtn) {
+    adminBtn.style.display = isPrivileged ? 'flex' : 'none';
+    adminBtn.classList.toggle('active', activeTab === 'admin');
   }
 }
 
 function switchTab(tab) {
-  const role = currentUserProfile?.role || 'Guest';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const isGuest = role === 'Guest';
-  // Guest can only access setlists and profile
-  if (isGuest && !['setlists','profile'].includes(tab)) return;
-
   closeSongSheet();
   closeSetlistDetail();
   closeAllDropdowns();
@@ -2801,29 +2300,15 @@ function switchTab(tab) {
     panel.classList.add('active');
   }
 
-  // Show/hide admin Users sub-tabs
-  const subtabs = document.getElementById('users-subtabs');
-  if (subtabs) {
-    const isAdmin = roles.includes('Admin');
-    subtabs.style.display = (tab === 'users' && isAdmin) ? 'block' : 'none';
-  }
-
-  // Populate profile data when switching to profile tab
-  if (tab === 'profile') populateProfileTab();
-
-  // Hide search/filter floating buttons on admin and profile tabs
+  // Hide search/filter on admin tab
   const headerActions = document.getElementById('header-actions');
-  if (headerActions) {
-    const showSearchFilter = !['admin','profile'].includes(tab);
-    headerActions.style.display = showSearchFilter ? 'flex' : 'none';
-  }
+  if (headerActions) headerActions.style.display = tab === 'admin' ? 'none' : 'flex';
 
   updateFAB();
   updateHomeBtn(false);
-  closeSidebar();
   closeHeaderSearch();
   syncHeaderFilterDot();
-  buildNav(); // refresh sidebar active states
+  buildBottomNav();
 }
 
 // Users sub-tab state
@@ -2854,18 +2339,11 @@ function switchUsersSubTab(subtab) {
 }
 
 function updateFAB() {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const fabEl = document.getElementById('fab-btn');
   const fabIcon = document.getElementById('fab-icon');
   const addSongFab = document.getElementById('add-song-fab');
-  // Setlist creation: Admin can create all types; Sub-Admin and Lead can create Public only
-  const canCreateSetlist = ['Admin','Sub-Admin','Lead'].includes(role) ||
-    roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    (currentUserProfile?.canCreateSetlist === true);
-  const canCreateSong = ['Admin','Sub-Admin','Lead'].includes(role) ||
-    roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    (currentUserProfile?.canAddSongs === true);
+  const canCreateSetlist = appRole !== 'viewer';
+  const canCreateSong    = appRole !== 'viewer';
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
   const setlistDetailOpen = currentSetlistId !== null;
 
@@ -2881,9 +2359,7 @@ function updateFAB() {
   // Add-Song FAB: only inside a setlist detail, when canEdit, under song limit, no song sheet
   if (addSongFab) {
     const setlist = allSetlists.find(s => s.id === currentSetlistId);
-    const isOwner = setlist?.createdBy === currentUser?.uid;
-    const canEdit = isOwner || ['Admin','Sub-Admin','Lead'].includes(role) ||
-      roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r));
+    const canEdit = appRole !== 'viewer';
     const underLimit = setlist ? currentSetlistSongs.length < getSetlistSongLimit() : false;
     const showAddSong = setlistDetailOpen && !songSheetOpen && canEdit && underLimit;
     addSongFab.style.display = showAddSong ? 'flex' : 'none';
@@ -3033,7 +2509,7 @@ function loadAdminSettings() {
         updateThemeCarousel('gigbook');
       }
       // If this user is Admin and has a personal admin-only theme, apply it on top
-      if (currentUserProfile?.role === 'Admin') {
+      if (appRole === 'admin') {
         try {
           const adminStr = localStorage.getItem('rccm_admin_theme');
           if (adminStr) {
@@ -3043,6 +2519,7 @@ function loadAdminSettings() {
         } catch(e) {}
       }
       if (data.typography) applyTypographyData(data.typography);
+      if (data.listLayout) setListLayout(data.listLayout, true);
       if (data.appName) {
         document.title = data.appName;
         const inp = document.getElementById('admin-app-name');
@@ -3188,11 +2665,11 @@ function filterSetlists() {
 
 function getFavourites() {
   if (!currentUser) return [];
-  try { return JSON.parse(localStorage.getItem(`rccm_favs_${currentUser.uid}`) || '[]'); } catch(e) { return []; }
+  try { return JSON.parse(localStorage.getItem(`rccm_favs_${'service'}`) || '[]'); } catch(e) { return []; }
 }
 function setFavourites(favs) {
   if (!currentUser) return;
-  try { localStorage.setItem(`rccm_favs_${currentUser.uid}`, JSON.stringify(favs)); } catch(e) {}
+  try { localStorage.setItem(`rccm_favs_${'service'}`, JSON.stringify(favs)); } catch(e) {}
 }
 function isFavourite(songId) {
   return getFavourites().includes(songId);
@@ -3203,7 +2680,7 @@ function toggleFavourite(songId) {
     favs = favs.filter(id => id !== songId);
     // Reset the displayed key for this song back to original when unfavouriting
     if (currentUser) {
-      try { localStorage.removeItem(`rccm_key_${currentUser.uid}_${songId}`); } catch(e) {}
+      try { localStorage.removeItem(`rccm_key_${'service'}_${songId}`); } catch(e) {}
     }
   } else {
     favs.push(songId);
@@ -3251,7 +2728,7 @@ function renderSongsList() {
   if (emptyEl) emptyEl.style.display = 'none';
   const _roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [currentUserProfile?.role || ''];
   const _abilities = currentUserProfile?.abilities || [];
-  const isAdmin = _roles.includes('Admin');
+  const isAdmin = _appRole === 'admin';
   const canEdit = isAdmin || _roles.some(r => ['Sub-Admin','Lead'].includes(r)) || _abilities.includes('editSong');
   listEl.innerHTML = songs.map(song => {
     const fav = isFavourite(song.id);
@@ -3259,7 +2736,7 @@ function renderSongsList() {
     let displayKey = song.key || '';
     if (currentUser) {
       try {
-        const saved = localStorage.getItem(`rccm_key_${currentUser.uid}_${song.id}`);
+        const saved = localStorage.getItem(`rccm_key_${'service'}_${song.id}`);
         if (saved) displayKey = saved;
       } catch(e) {}
     }
@@ -3411,12 +2888,12 @@ function openSongSheet(songId, fromSetlist) {
   localKey = originalKey;
   if (fromSetlist && currentSetlistId && currentUser) {
     try {
-      const setlistKey = localStorage.getItem(`rccm_setlistkey_${currentUser.uid}_${currentSetlistId}_${songId}`);
+      const setlistKey = localStorage.getItem(`rccm_setlistkey_${'service'}_${currentSetlistId}_${songId}`);
       if (setlistKey) localKey = setlistKey;
     } catch(e) {}
   } else if (isFavourite(songId) && currentUser) {
     try {
-      const favKey = localStorage.getItem(`rccm_key_${currentUser.uid}_${songId}`);
+      const favKey = localStorage.getItem(`rccm_key_${'service'}_${songId}`);
       if (favKey) localKey = favKey;
     } catch(e) {}
   }
@@ -3721,13 +3198,13 @@ function selectKey(key) {
   // Save the chosen key for this user+song combo
   if (currentUser && currentSongId) {
     try {
-      const storageKey = `rccm_key_${currentUser.uid}_${currentSongId}`;
+      const storageKey = `rccm_key_${'service'}_${currentSongId}`;
       localStorage.setItem(storageKey, key);
     } catch(e) {}
     // If opened from a setlist, also save a setlist-specific key override
     if (openedFromSetlist && currentSetlistId) {
       try {
-        const setlistKeyKey = `rccm_setlistkey_${currentUser.uid}_${currentSetlistId}_${currentSongId}`;
+        const setlistKeyKey = `rccm_setlistkey_${'service'}_${currentSetlistId}_${currentSongId}`;
         localStorage.setItem(setlistKeyKey, key);
       } catch(e) {}
     }
@@ -3744,11 +3221,11 @@ function selectKey(key) {
 // ============================================================
 function getLyricsOnlyPref() {
   if (!currentUser) return false;
-  try { return localStorage.getItem(`rccm_lyricsonly_${currentUser.uid}`) === '1'; } catch(e) { return false; }
+  try { return localStorage.getItem(`rccm_lyricsonly_${'service'}`) === '1'; } catch(e) { return false; }
 }
 function saveLyricsOnlyPref(val) {
   if (!currentUser) return;
-  try { localStorage.setItem(`rccm_lyricsonly_${currentUser.uid}`, val ? '1' : '0'); } catch(e) {}
+  try { localStorage.setItem(`rccm_lyricsonly_${'service'}`, val ? '1' : '0'); } catch(e) {}
 }
 function applyLyricsOnlyUI() {
   const btn = document.getElementById('lyrics-toggle-label');
@@ -4030,7 +3507,7 @@ function _setupAutoscrollGestures() {
 }
 
 // ── Hide / show the auto-scroll button (per-device preference) ──
-function _autoscrollHideKey() { return `rccm_hide_autoscroll_${currentUser?.uid || 'anon'}`; }
+function _autoscrollHideKey() { return `rccm_hide_autoscroll_${'service' || 'anon'}`; }
 
 function hideAutoscrollFab() {
   document.getElementById('autoscroll-fab').style.display = 'none';
@@ -4386,7 +3863,7 @@ function openCreateSongModal() {
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
   const canAdd = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    currentUserProfile?.canAddSongs === true || abilities.includes('addSong');
+    appRole !== 'viewer' === true || abilities.includes('addSong');
   if (!canAdd) { showAlert('Permission Denied', 'You do not have permission to add songs.', 'mdi:lock'); return; }
   document.getElementById('new-song-title').value = '';
   document.getElementById('new-song-artist').value = '';
@@ -4745,7 +4222,7 @@ async function saveSong() {
     } else {
       await db.collection('songs').add({
         title, artist, content, key,
-        createdBy: currentUser.uid,
+        createdBy: 'service',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
@@ -4761,15 +4238,15 @@ function canSeeSetlist(setlist) {
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
   // Admin sees every setlist
-  if (roles.includes('Admin') || abilities.includes('viewPrivateSetlists')) return true;
+  if (appRole === 'admin' || abilities.includes('viewPrivateSetlists')) return true;
   // Custom group: only creator or whitelisted members
   if (setlist.isCustomGroup) {
-    if (setlist.createdBy === currentUser?.uid) return true;
-    if (setlist.whitelist && setlist.whitelist.includes(currentUser?.uid)) return true;
+    if (setlist.createdBy === 'service') return true;
+    if (setlist.whitelist && setlist.whitelist.includes('service')) return true;
     return false;
   }
   // Private: only the creator
-  if (setlist.isPrivate && setlist.createdBy !== currentUser?.uid) return false;
+  if (setlist.isPrivate && setlist.createdBy !== 'service') return false;
   // Public: everyone sees it
   return true;
 }
@@ -4830,7 +4307,7 @@ function renderSetlistsList() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
   listEl.innerHTML = setlists.map(setlist => {
-    const isOwner = setlist.createdBy === currentUser?.uid;
+    const isOwner = setlist.createdBy === 'service';
     const _roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [currentUserProfile?.role || ''];
     const _abilities = currentUserProfile?.abilities || [];
     const canEdit = isOwner || _roles.some(r => ['Admin','Sub-Admin'].includes(r)) || _abilities.includes('editSetlist') || _abilities.includes('deleteSetlist');
@@ -4868,7 +4345,7 @@ async function deleteSetlist(id) {
   const role = currentUserProfile?.role || '';
   const setlist = allSetlists.find(s => s.id === id);
   if (!setlist) return;
-  if (role !== 'Admin' && setlist.createdBy !== currentUser?.uid) { showAlert('Permission Denied', 'You can only delete your own setlists.', 'mdi:lock'); return; }
+  if (role !== 'Admin' && setlist.createdBy !== 'service') { showAlert('Permission Denied', 'You can only delete your own setlists.', 'mdi:lock'); return; }
   try { await db.collection('setlists').doc(id).delete(); } catch(e) { console.error(e); }
 }
 
@@ -4913,7 +4390,7 @@ function renderSetlistDetail(setlist) {
   const role = currentUserProfile?.role || '';
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
-  const isOwner = setlist.createdBy === currentUser?.uid;
+  const isOwner = setlist.createdBy === 'service';
   const canEdit = isOwner || roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) || abilities.includes('editSetlist');
   const isTech = roles.includes('Tech');
   const detail = document.getElementById('setlist-detail-view');
@@ -4954,7 +4431,7 @@ function renderSetlistDetail(setlist) {
 
 function openCreatorProfile(uid) {
   // If it's the current user's own profile, open profile view
-  if (uid === currentUser?.uid) { openProfileView(); return; }
+  if (uid === 'service') { openProfileView(); return; }
   // Otherwise open user detail
   openUserDetail(uid);
 }
@@ -4967,7 +4444,7 @@ async function loadSetlistCreator(uid) {
     const d = snap.data();
     const myRole = currentUserProfile?.role || '';
     const myRoles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [myRole];
-    const isOwner = uid === currentUser?.uid;
+    const isOwner = uid === 'service';
     const canManage = isOwner || myRoles.includes('Admin');
     const setlist = allSetlists.find(s => s.id === currentSetlistId);
     const isCustomGroup = setlist?.isCustomGroup;
@@ -5036,7 +4513,7 @@ function renderManageAddList(query) {
   const creatorUid = setlist?.createdBy;
   // Exclude creator and already-added members
   const available = allUsers.filter(u =>
-    u.uid !== currentUser?.uid &&
+    u.uid !== 'service' &&
     u.uid !== creatorUid &&
     !whitelist.includes(u.uid) &&
     (
@@ -5215,8 +4692,8 @@ function openCreateSetlistModal() {
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
   const canCreatePublic = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) || abilities.includes('createPublicSetlist') || abilities.includes('canCreateSetlist');
-  const canCreatePrivate = roles.includes('Admin') || abilities.includes('createPrivateSetlist');
-  const canCreateCustom = roles.includes('Admin') || abilities.includes('createCustomSetlist');
+  const canCreatePrivate = appRole === 'admin' || abilities.includes('createPrivateSetlist');
+  const canCreateCustom = appRole === 'admin' || abilities.includes('createCustomSetlist');
 
   if (!canCreatePublic && !canCreatePrivate && !canCreateCustom) {
     showAlert('Permission Denied', 'You do not have permission to create setlists.', 'mdi:lock');
@@ -5272,7 +4749,7 @@ function toggleCustomGroupUI(checked) {
 function renderCustomGroupUsers(query) {
   const container = document.getElementById('custom-group-users-list');
   const filtered = allUsers.filter(u =>
-    u.uid !== currentUser?.uid &&
+    u.uid !== 'service' &&
     u.role !== 'Admin' &&
     (u.displayName||'').toLowerCase().includes(query.toLowerCase())
   );
@@ -5320,11 +4797,11 @@ async function saveSetlist() {
   const name = document.getElementById('new-setlist-name').value.trim();
   if (!name) { showAlert('Missing Info', 'Please enter a setlist name.', 'mdi:alert-circle'); return; }
   const role = currentUserProfile?.role || '';
-  const isAdmin = role === 'Admin';
+  const isAdmin = appRole === 'admin';
 
   // Enforce setlist creation limit (Admin = unlimited, everyone else = 3 by default)
   if (!isAdmin) {
-    const existingCount = allSetlists.filter(s => s.createdBy === currentUser?.uid).length;
+    const existingCount = allSetlists.filter(s => s.createdBy === 'service').length;
     const maxAllowed = currentUserProfile?.maxSetlistsOverride ?? 3;
     if (existingCount >= maxAllowed) {
       closeCreateSetlistModal();
@@ -5334,7 +4811,7 @@ async function saveSetlist() {
   }
 
   // Only Admin, Sub-Admin, Lead can create custom group setlists
-  const canCreateCustom = ['Admin','Sub-Admin','Lead'].includes(role);
+  const canCreateCustom = appRole !== 'viewer';
   const isCustomGroup = canCreateCustom && document.getElementById('new-setlist-custom').checked;
 
   // If custom group, it's neither public nor private in the normal sense
@@ -5342,7 +4819,7 @@ async function saveSetlist() {
 
   const data = {
     name, isPrivate, isCustomGroup, songs: [],
-    createdBy: currentUser.uid,
+    createdBy: 'service',
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   if (isCustomGroup) data.whitelist = selectedCustomMembers;
@@ -5365,7 +4842,7 @@ function renderUsersList() {
   const role = currentUserProfile?.role || '';
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
-  const isAdmin = roles.includes('Admin');
+  const isAdmin = appRole === 'admin';
   const canSeeUnapproved = isAdmin || abilities.includes('viewUnapprovedUsers');
 
   let users = allUsers.filter(u => {
@@ -5698,7 +5175,7 @@ function setUserFilter(filter) {
 }
 
 async function deleteUser(uid) {
-  if (uid === currentUser?.uid) { showAlert('Error', 'You cannot delete your own account.', 'mdi:alert'); return; }
+  if (uid === 'service') { showAlert('Error', 'You cannot delete your own account.', 'mdi:alert'); return; }
   if (!confirm('Delete this user from the database?')) return;
   try { await db.collection('users').doc(uid).delete(); } catch(e) { console.error(e); }
 }
@@ -5709,7 +5186,7 @@ async function approveUser(uid) {
   const role = currentUserProfile?.role || '';
   const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
   const abilities = currentUserProfile?.abilities || [];
-  const isAdmin = roles.includes('Admin') || abilities.includes('approveUsers');
+  const isAdmin = appRole === 'admin' || abilities.includes('approveUsers');
   if (!isAdmin) { showAlert('Permission Denied', 'Only Admin can approve users.', 'mdi:lock'); return; }
   // Open the edit modal to let Admin assign a role when approving
   openUserEditModalForApproval(uid);
@@ -6014,7 +5491,7 @@ function populateProfileTab() {
   if (tutToggle) { tutToggle.checked = p.showTutorial !== false; }
   tutorialEnabled = p.showTutorial !== false;
   const adminBtn = document.getElementById('profile-admin-btn');
-  if (adminBtn) adminBtn.style.display = roles.includes('Admin') ? 'flex' : 'none';
+  if (adminBtn) adminBtn.style.display = appRole === 'admin' ? 'flex' : 'none';
   const closeBtn = document.getElementById('profile-close-btn');
   if (closeBtn) closeBtn.style.display = (p.role === 'Guest') ? 'flex' : 'none';
   const signedInEl = document.getElementById('profile-signed-in-as');
@@ -6024,7 +5501,7 @@ function populateProfileTab() {
 }
 
 function renderProfileSetlists() {
-  const mySetlists = allSetlists.filter(s => s.createdBy === currentUser?.uid);
+  const mySetlists = allSetlists.filter(s => s.createdBy === 'service');
   const container = document.getElementById('profile-my-setlists');
   const empty = document.getElementById('profile-setlists-empty');
   if (!mySetlists.length) {
@@ -6065,7 +5542,7 @@ async function saveTutorialPref(val) {
   tutorialEnabled = val;
   if (!currentUser) return;
   try {
-    await db.collection('users').doc(currentUser.uid).update({ showTutorial: val });
+    await db.collection('users').doc('service').update({ showTutorial: val });
     if (currentUserProfile) currentUserProfile.showTutorial = val;
   } catch(e) { console.error(e); }
 }
@@ -6083,7 +5560,7 @@ async function saveDisplayName() {
   if (!name) return;
   try {
     await currentUser.updateProfile({ displayName: name });
-    await db.collection('users').doc(currentUser.uid).update({ displayName: name });
+    await db.collection('users').doc('service').update({ displayName: name });
     if (currentUserProfile) currentUserProfile.displayName = name;
     document.getElementById('profile-view-name').textContent = name;
     closeNameEditModal();
@@ -6119,7 +5596,7 @@ function closeAutoscrollTutorialModal() {
 async function saveAutoscrollTutorialPref(val) {
   if (!currentUser) return;
   try {
-    await db.collection('users').doc(currentUser.uid).update({ showAutoscrollTutorial: val });
+    await db.collection('users').doc('service').update({ showAutoscrollTutorial: val });
     if (currentUserProfile) currentUserProfile.showAutoscrollTutorial = val;
   } catch(e) { console.error(e); }
 }
@@ -6128,6 +5605,140 @@ async function saveAutoscrollTutorialPref(val) {
 // ADMIN SETTINGS
 // ============================================================
 // ============================================================
+// ROLE PICKER + 3-TAP ADMIN LOGIN
+// ============================================================
+function showRolePicker() {
+  document.getElementById('splash-screen').style.display = 'none';
+  document.getElementById('role-picker-screen').style.display = 'flex';
+}
+
+function selectViewerRole(type) {
+  viewerType = type;
+  appRole    = 'viewer';
+  localStorage.setItem('gb_viewer_type', type);
+  localStorage.removeItem('gb_app_role');
+  currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
+  mountApp();
+}
+
+function handleLogoPinTap() {
+  _logoPinTaps++;
+  clearTimeout(_logoPinTimer);
+  _logoPinTimer = setTimeout(() => { _logoPinTaps = 0; }, 1000);
+  if (_logoPinTaps >= 3) {
+    _logoPinTaps = 0;
+    clearTimeout(_logoPinTimer);
+    showPinModal();
+  }
+}
+
+let _pinEntry = '';
+function showPinModal() {
+  _pinEntry = '';
+  updatePinDots();
+  document.getElementById('pin-error').style.display = 'none';
+  document.getElementById('pin-modal').style.display = 'flex';
+}
+function closePinModal() {
+  _pinEntry = '';
+  document.getElementById('pin-modal').style.display = 'none';
+}
+function pinKey(digit) {
+  if (_pinEntry.length >= 4) return;
+  _pinEntry += digit;
+  updatePinDots();
+  if (_pinEntry.length === 4) {
+    setTimeout(checkPin, 120);
+  }
+}
+function pinBackspace() {
+  _pinEntry = _pinEntry.slice(0, -1);
+  updatePinDots();
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pin-dot-' + i);
+    if (dot) dot.style.background = i < _pinEntry.length ? 'var(--accent)' : 'var(--border-color)';
+  }
+}
+async function checkPin() {
+  const errEl = document.getElementById('pin-error');
+  const isAdmin    = _pinEntry === ADMIN_PIN;
+  const isSubAdmin = _pinEntry === _subAdminPin;
+  if (!isAdmin && !isSubAdmin) {
+    errEl.textContent = 'Incorrect PIN. Try again.';
+    errEl.style.display = 'block';
+    _pinEntry = '';
+    updatePinDots();
+    return;
+  }
+  // Silent Firebase sign-in for write access
+  try {
+    if (!currentUser) await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+  } catch(e) { console.warn('Service auth failed:', e); }
+  appRole    = isAdmin ? 'admin' : 'subadmin';
+  viewerType = appRole;
+  localStorage.setItem('gb_app_role', appRole);
+  currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
+  closePinModal();
+  // Force show chords for admin/subadmin
+  lyricsOnlyMode = false;
+  const lyricsBtn = document.getElementById('lyrics-only-toggle-btn');
+  if (lyricsBtn) lyricsBtn.style.display = '';
+  buildBottomNav();
+  updateRoleBadge();
+  updateFAB();
+  if (activeTab === 'songs' || activeTab === 'setlists') {
+    // Refresh current list to show edit controls
+    renderSongsList();
+    renderSetlistsList();
+  }
+  showAlert(isAdmin ? 'Admin Mode' : 'Sub-Admin Mode',
+    isAdmin ? 'Welcome, Admin.' : 'Welcome, Sub-Admin.', 'mdi:shield-crown');
+}
+
+function updateRoleBadge() {
+  const badge = document.getElementById('role-badge');
+  const icon  = document.getElementById('role-badge-icon');
+  const label = document.getElementById('role-badge-label');
+  if (!badge) return;
+  if (appRole === 'admin') {
+    badge.style.display = 'flex';
+    if (icon) icon.setAttribute('icon', 'mdi:shield-crown');
+    if (label) label.textContent = 'Admin';
+  } else if (appRole === 'subadmin') {
+    badge.style.display = 'flex';
+    if (icon) icon.setAttribute('icon', 'mdi:shield-half-full');
+    if (label) label.textContent = 'Sub-Admin';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function saveSubAdminPin() {
+  if (appRole !== 'admin') { showAlert('Access Denied','Only Admin can change the Sub-Admin PIN.','mdi:lock'); return; }
+  const input = document.getElementById('subadmin-pin-input');
+  const pin   = (input?.value || '').trim();
+  if (!/^\d{4}$/.test(pin)) { showAlert('Invalid PIN','PIN must be exactly 4 digits.','mdi:alert-circle'); return; }
+  if (pin === ADMIN_PIN) { showAlert('Invalid PIN','Sub-Admin PIN cannot match Admin PIN.','mdi:alert-circle'); return; }
+  try {
+    await db.collection('settings').doc('global').set({ subAdminPin: pin }, { merge: true });
+    _subAdminPin = pin;
+    if (input) input.value = '';
+    closeAdminModal('subadminpin');
+    showAlert('Saved','Sub-Admin PIN updated.','mdi:check-circle');
+  } catch(e) { showAlert('Error','Failed to save PIN.','mdi:alert-circle'); }
+}
+
+// Also handle logo 3-tap from the main app header area
+document.addEventListener('DOMContentLoaded', () => {
+  // Attach tap handler to any logo images in the app
+  document.querySelectorAll('#app-root img[alt*="Logo"], #app-root img[alt*="logo"], #app-root img[alt*="RCCM"]').forEach(el => {
+    el.addEventListener('click', handleLogoPinTap);
+  });
+});
+
+// ============================================================
 // ADMIN SECTION MODALS
 // ============================================================
 function openAdminModal(key) {
@@ -6135,11 +5746,154 @@ function openAdminModal(key) {
   if (!el) return;
   el.style.display = 'flex';
   _animateModalIn(el);
+  if (key === 'dangerzone') dzPopulate();
+  if (key === 'admin') { const pinBtn = document.getElementById('subadmin-pin-btn'); if (pinBtn) pinBtn.style.display = appRole === 'admin' ? 'flex' : 'none'; }
 }
 function closeAdminModal(key) {
   const el = document.getElementById('admin-modal-' + key);
   if (!el) return;
   _animateModalOut(el);
+}
+
+// ============================================================
+// DANGER ZONE — SELECT / SELECT-ALL DELETE
+// ============================================================
+let _dzSelectedSetlists = new Set();
+let _dzSelectedSongs    = new Set();
+
+function switchDangerTab(tab) {
+  const isSetlists = tab === 'setlists';
+  document.getElementById('dz-panel-setlists').style.display = isSetlists ? 'block' : 'none';
+  document.getElementById('dz-panel-songs').style.display    = isSetlists ? 'none'  : 'block';
+  const sBtn = document.getElementById('dz-tab-setlists');
+  const gBtn = document.getElementById('dz-tab-songs');
+  sBtn.style.border     = isSetlists ? '2px solid var(--accent)' : '2px solid var(--border-color)';
+  sBtn.style.background = isSetlists ? 'var(--accent-glow)' : 'transparent';
+  sBtn.style.color      = isSetlists ? 'var(--accent)' : 'var(--text-secondary)';
+  gBtn.style.border     = !isSetlists ? '2px solid var(--accent)' : '2px solid var(--border-color)';
+  gBtn.style.background = !isSetlists ? 'var(--accent-glow)' : 'transparent';
+  gBtn.style.color      = !isSetlists ? 'var(--accent)' : 'var(--text-secondary)';
+}
+
+function dzPopulate() {
+  _dzSelectedSetlists.clear();
+  _dzSelectedSongs.clear();
+  switchDangerTab('setlists');
+  dzRenderList('setlists');
+  dzRenderList('songs');
+}
+
+function dzRenderList(type) {
+  const isSetlists = type === 'setlists';
+  const items = isSetlists ? allSetlists : allSongs;
+  const selected = isSetlists ? _dzSelectedSetlists : _dzSelectedSongs;
+  const listEl  = document.getElementById('dz-' + type + '-list');
+  const emptyEl = document.getElementById('dz-' + type + '-empty');
+  const countEl = document.getElementById('dz-' + type + '-count');
+  if (!listEl) return;
+  if (items.length === 0) {
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (countEl) countEl.textContent = '0 ' + type;
+    dzUpdateDeleteBtn(type);
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (countEl) countEl.textContent = selected.size + ' / ' + items.length + ' selected';
+  listEl.innerHTML = items.map(item => {
+    const id   = item.id;
+    const name = isSetlists ? (item.name || 'Untitled') : (item.title || 'Untitled');
+    const sub  = isSetlists
+      ? ((item.songs ? item.songs.length : 0) + ' songs')
+      : (item.artist || '');
+    const chk  = selected.has(id);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;background:${chk ? 'rgba(220,50,50,0.08)' : 'var(--surface-1)'};border:1px solid ${chk ? 'rgba(220,50,50,0.35)' : 'var(--border-color)'};cursor:pointer;transition:background 0.12s,border-color 0.12s;">
+      <input type="checkbox" ${chk ? 'checked' : ''} onchange="dzToggle('${type}','${id}',this.checked)"
+        style="width:16px;height:16px;accent-color:#e05555;flex-shrink:0;" />
+      <div style="flex:1;min-width:0;">
+        <div style="color:var(--lyrics-color);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(name)}</div>
+        ${sub ? `<div style="color:var(--text-muted);font-size:11px;margin-top:1px;">${escHtml(sub)}</div>` : ''}
+      </div>
+    </label>`;
+  }).join('');
+}
+
+function dzToggle(type, id, checked) {
+  const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
+  checked ? selected.add(id) : selected.delete(id);
+  dzUpdateDeleteBtn(type);
+  // update count label
+  const countEl = document.getElementById('dz-' + type + '-count');
+  const total   = (type === 'setlists' ? allSetlists : allSongs).length;
+  if (countEl) countEl.textContent = selected.size + ' / ' + total + ' selected';
+  // update row styling
+  const listEl = document.getElementById('dz-' + type + '-list');
+  if (!listEl) return;
+  const labels = listEl.querySelectorAll('label');
+  labels.forEach(label => {
+    const cb = label.querySelector('input[type=checkbox]');
+    if (!cb) return;
+    const cbId = cb.getAttribute('onchange')?.match(/'([^']+)','([^']+)'/)?.[2];
+    if (!cbId) return;
+    const isChk = selected.has(cbId);
+    label.style.background   = isChk ? 'rgba(220,50,50,0.08)' : 'var(--surface-1)';
+    label.style.borderColor  = isChk ? 'rgba(220,50,50,0.35)' : 'var(--border-color)';
+  });
+}
+
+function dzSelectAll(type) {
+  const items    = type === 'setlists' ? allSetlists : allSongs;
+  const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
+  items.forEach(item => selected.add(item.id));
+  dzRenderList(type);
+  dzUpdateDeleteBtn(type);
+}
+
+function dzDeselectAll(type) {
+  const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
+  selected.clear();
+  dzRenderList(type);
+  dzUpdateDeleteBtn(type);
+}
+
+function dzUpdateDeleteBtn(type) {
+  const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
+  const btn      = document.getElementById('dz-delete-' + type + '-btn');
+  const label    = document.getElementById('dz-delete-' + type + '-label');
+  const n        = selected.size;
+  const noun     = type === 'setlists' ? 'Setlist' : 'Song';
+  if (btn)   { btn.disabled = n === 0; btn.style.opacity = n > 0 ? '1' : '0.5'; }
+  if (label) label.textContent = n === 0
+    ? 'Delete Selected ' + noun + 's'
+    : 'Delete ' + n + ' ' + noun + (n > 1 ? 's' : '');
+}
+
+async function dzDeleteSelected(type) {
+  if (appRole !== 'admin') return;
+  const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
+  const n = selected.size;
+  if (!n) return;
+  const noun = type === 'setlists' ? 'setlist' : 'song';
+  if (!confirm(`Permanently delete ${n} ${noun}${n > 1 ? 's' : ''}? This cannot be undone.`)) return;
+  const btn = document.getElementById('dz-delete-' + type + '-btn');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  try {
+    const col    = type === 'setlists' ? 'setlists' : 'songs';
+    const ids    = [...selected];
+    // Firestore batch limit is 500 writes
+    for (let i = 0; i < ids.length; i += 500) {
+      const batch = db.batch();
+      ids.slice(i, i + 500).forEach(id => batch.delete(db.collection(col).doc(id)));
+      await batch.commit();
+    }
+    (type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs).clear();
+    closeAdminModal('dangerzone');
+    showAlert('Deleted', n + ' ' + noun + (n > 1 ? 's' : '') + ' deleted successfully.', 'mdi:check-circle');
+  } catch(e) {
+    console.error(e);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    showAlert('Error', 'Failed to delete. Check console for details.', 'mdi:alert-circle');
+  }
 }
 
 // ============================================================
@@ -6201,7 +5955,7 @@ async function confirmImportSongs() {
         artist:    (s.artist || '').trim(),
         key:       s.key   || 'C',
         content:   s.content || '',
-        createdBy: currentUser.uid,
+        createdBy: 'service',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     });
@@ -6279,7 +6033,7 @@ async function saveAdminSettings() {
 }
 
 let _currentListLayout = 'card';
-function setListLayout(mode) {
+function setListLayout(mode, skipSave) {
   _currentListLayout = mode;
   document.body.classList.toggle('layout-line', mode === 'line');
   document.body.classList.toggle('layout-card', mode === 'card');
@@ -6294,6 +6048,11 @@ function setListLayout(mode) {
     lineBtn.style.border = mode === 'line' ? '2px solid var(--accent)' : '2px solid var(--border-color)';
     lineBtn.style.background = mode === 'line' ? 'var(--accent-glow)' : 'transparent';
     lineBtn.style.color = mode === 'line' ? 'var(--accent)' : 'var(--text-secondary)';
+  }
+  // Persist to Firestore (admin only, unless called internally during load)
+  if (!skipSave && appRole === 'admin') {
+    db.collection('settings').doc('global').set({ listLayout: mode }, { merge: true })
+      .catch(e => console.error('setListLayout save:', e));
   }
 }
 
@@ -6728,7 +6487,7 @@ function saveCustomTheme() {
 }
 
 async function saveThemeToDb(theme) {
-  if (currentUserProfile?.role !== 'Admin') return;
+  if (appRole !== 'admin') return;
   try {
     await db.collection('settings').doc('global').set({ theme }, { merge: true });
   } catch(e) { console.error(e); }
@@ -6770,7 +6529,7 @@ function setMetaFont(val) {
 }
 
 async function saveTypographyToDb(typo) {
-  if (currentUserProfile?.role !== 'Admin') return;
+  if (appRole !== 'admin') return;
   try {
     await db.collection('settings').doc('global').set({ typography: typo }, { merge: true });
   } catch(e) { console.error(e); }
@@ -6833,7 +6592,7 @@ async function seedSongsIfEmpty() {
         const ref = db.collection('songs').doc();
         batch.set(ref, {
           ...song,
-          createdBy: currentUser?.uid || 'system',
+          createdBy: 'service' || 'system',
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       });
@@ -7008,7 +6767,7 @@ function closeAlertModal() { _animateModalOut(document.getElementById('alert-mod
 // SETLIST LIMIT MODAL
 // ============================================================
 function showSetlistLimitModal(maxAllowed) {
-  const mySetlists = allSetlists.filter(s => s.createdBy === currentUser?.uid);
+  const mySetlists = allSetlists.filter(s => s.createdBy === 'service');
   document.getElementById('setlist-limit-msg').textContent =
     `You've reached your limit of ${maxAllowed} setlist${maxAllowed !== 1 ? 's' : ''}. Delete one below to create a new one.`;
   const listEl = document.getElementById('setlist-limit-list');
@@ -7041,7 +6800,7 @@ async function deleteSetlistFromLimit(id) {
   try {
     await db.collection('setlists').doc(id).delete();
     // Re-render the list after deletion; if now under limit, close and reopen create modal
-    const mySetlists = allSetlists.filter(s => s.createdBy === currentUser?.uid);
+    const mySetlists = allSetlists.filter(s => s.createdBy === 'service');
     const maxAllowed = currentUserProfile?.maxSetlistsOverride ?? 3;
     if (mySetlists.length < maxAllowed) {
       closeSetlistLimitModal();
