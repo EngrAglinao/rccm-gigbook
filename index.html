@@ -921,7 +921,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
     </div><!-- /tab-setlists -->
 
-    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);">
+    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;">Admin Panel</h1>
         <button onclick="exitAdminMode()" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:#e05555;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
@@ -1986,9 +1986,13 @@ window.addEventListener('pageshow', () => {
 
 auth.onAuthStateChanged((user) => {
   currentUser = user;
-  // Always boot straight to app — role picker handles first-run
   clearTimeout(_splashTimer);
-  bootApp();
+  if (!user) {
+    // Sign in anonymously so Firestore reads work for all viewers
+    firebase.auth().signInAnonymously().catch(() => bootApp());
+  } else {
+    bootApp();
+  }
 });
 
 async function bootApp() {
@@ -2007,9 +2011,10 @@ async function bootApp() {
     try {
       if (!currentUser) await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
       appRole    = savedAppRole;
-      viewerType = savedAppRole; // admins see full chords
+      viewerType = savedAppRole;
       currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
       mountApp();
+      setTimeout(() => switchTab('admin'), 50);
       return;
     } catch(e) { localStorage.removeItem('gb_app_role'); }
   }
@@ -2461,27 +2466,7 @@ function setupListeners() {
     hideSyncBar();
   }, err => { console.error('Setlists listener:', err); hideSyncBar(); });
 
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const canSeeUsers = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    abilities.includes('viewApprovedUsers') || abilities.includes('viewUnapprovedUsers');
-  if (canSeeUsers) {
-    if (usersUnsubscribe) usersUnsubscribe();
-    usersUnsubscribe = db.collection('users').onSnapshot(snap => {
-      showSyncBar();
-      allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderUsersList();
-      // Update pending badge
-      const unapprovedCount = allUsers.filter(u => u.approved === false && u.role === 'Guest' && u.email !== ADMIN_EMAIL).length;
-      const badge = document.getElementById('unapproved-count-badge');
-      if (badge) {
-        badge.textContent = unapprovedCount;
-        badge.style.display = unapprovedCount > 0 ? 'inline-block' : 'none';
-      }
-      hideSyncBar();
-    }, err => { console.error('Users listener:', err); hideSyncBar(); });
-  }
+  // Users tab removed — no users listener needed
 }
 
 function loadAdminSettings() {
@@ -2496,11 +2481,7 @@ function loadAdminSettings() {
         const limitEl = document.getElementById('admin-song-limit');
         if (limitEl) limitEl.value = data.songLimit;
       }
-      if (data.setlistTTLDays) {
-        globalSetlistTTLDays = data.setlistTTLDays;
-        const ttlEl = document.getElementById('admin-setlist-ttl');
-        if (ttlEl) ttlEl.value = data.setlistTTLDays;
-      }
+
       if (data.theme) {
         applyThemeData(data.theme, 'global');
       } else {
@@ -5688,11 +5669,9 @@ async function checkPin() {
   buildBottomNav();
   updateRoleBadge();
   updateFAB();
-  if (activeTab === 'songs' || activeTab === 'setlists') {
-    // Refresh current list to show edit controls
-    renderSongsList();
-    renderSetlistsList();
-  }
+  renderSongsList();
+  renderSetlistsList();
+  if (isAdmin || !isAdmin) switchTab('admin');
   showAlert(isAdmin ? 'Admin Mode' : 'Sub-Admin Mode',
     isAdmin ? 'Welcome, Admin.' : 'Welcome, Sub-Admin.', 'mdi:shield-crown');
 }
