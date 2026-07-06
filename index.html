@@ -212,8 +212,7 @@
     #add-song-fab,
     #autoscroll-fab {
       position: fixed !important;
-      bottom: 24px !important;
-      bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
       right: 20px !important;
       left: auto !important;
       z-index: 510 !important;
@@ -921,7 +920,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
     </div><!-- /tab-setlists -->
 
-    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);display:none;">
+    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;">Admin Panel</h1>
         <button onclick="exitAdminMode()" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:#e05555;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
@@ -988,7 +987,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </nav>
 
   <!-- ROLE/ADMIN BADGE (top-left of screen) -->
-  <div id="role-badge" style="display:none;position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:399;background:var(--accent-glow);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:5px;pointer-events:none;">
+  <div id="role-badge" style="display:none;position:fixed;bottom:calc(62px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:410;background:var(--accent-glow);border:1px solid var(--accent);border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:5px;pointer-events:none;white-space:nowrap;">
     <iconify-icon id="role-badge-icon" icon="mdi:shield-crown" style="font-size:13px;color:var(--accent-soft);"></iconify-icon>
     <span id="role-badge-label" style="font-size:11px;font-weight:700;color:var(--accent-soft);letter-spacing:0.03em;"></span>
   </div>
@@ -1414,7 +1413,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </div>
 </div>
 <!-- Tiny re-show pill, appears bottom-right when the auto-scroll button has been hidden -->
-<button id="autoscroll-reshow-btn" onclick="showAutoscrollFab()" title="Show auto-scroll button" style="display:none;position:fixed;bottom:calc(24px + env(safe-area-inset-bottom, 0px));right:20px;z-index:510;width:36px;height:36px;border-radius:50%;background:var(--surface-1);border:1px solid var(--border-subtle);color:var(--text-muted);align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(60,30,30,0.18);opacity:0.7;">
+<button id="autoscroll-reshow-btn" onclick="showAutoscrollFab()" title="Show auto-scroll button" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom, 0px));right:20px;z-index:510;width:36px;height:36px;border-radius:50%;background:var(--surface-1);border:1px solid var(--border-subtle);color:var(--text-muted);align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(60,30,30,0.18);opacity:0.7;">
   <iconify-icon icon="mdi:play-circle-outline" style="font-size:18px;"></iconify-icon>
 </button>
 <!-- CREATE SONG MODAL -->
@@ -1988,8 +1987,10 @@ auth.onAuthStateChanged((user) => {
   currentUser = user;
   clearTimeout(_splashTimer);
   if (!user) {
-    // Sign in anonymously so Firestore reads work for all viewers
-    firebase.auth().signInAnonymously().catch(() => bootApp());
+    firebase.auth().signInAnonymously().catch(e => {
+      console.warn('Anon auth failed, booting anyway:', e);
+      bootApp();
+    });
   } else {
     bootApp();
   }
@@ -2000,23 +2001,24 @@ async function bootApp() {
   try {
     const snap = await db.collection('settings').doc('global').get();
     if (snap.exists && snap.data().subAdminPin) _subAdminPin = snap.data().subAdminPin;
-    if (snap.exists && snap.data().adminPin)    ADMIN_PIN_OVERRIDE = snap.data().adminPin; // future-proof
+    // adminPin override reserved for future use
   } catch(e) { /* offline — use defaults */ }
 
   // Check localStorage for saved viewer role
   const savedRole = localStorage.getItem('gb_viewer_type');
   const savedAppRole = localStorage.getItem('gb_app_role');
   if (savedAppRole === 'admin' || savedAppRole === 'subadmin') {
-    // Re-authenticate silently
     try {
-      if (!currentUser) await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+      if (!currentUser || currentUser.isAnonymous) {
+        await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+      }
       appRole    = savedAppRole;
       viewerType = savedAppRole;
       currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
       mountApp();
-      setTimeout(() => switchTab('admin'), 50);
+      setTimeout(() => { buildBottomNav(); updateRoleBadge(); switchTab('admin'); }, 80);
       return;
-    } catch(e) { localStorage.removeItem('gb_app_role'); }
+    } catch(e) { console.warn('Re-auth failed:', e); localStorage.removeItem('gb_app_role'); }
   }
   if (savedRole) {
     viewerType = savedRole;
@@ -2034,7 +2036,9 @@ function exitAdminMode() {
   viewerType = savedType;
   localStorage.removeItem('gb_app_role');
   currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
-  firebase.auth().signOut().catch(() => {});
+  firebase.auth().signOut().then(() => {
+    firebase.auth().signInAnonymously().catch(() => {});
+  }).catch(() => {});
   updateRoleBadge();
   buildBottomNav();
   updateFAB();
@@ -5654,8 +5658,12 @@ async function checkPin() {
     return;
   }
   // Silent Firebase sign-in for write access
+  // Must sign out anonymous user first before signing in as service account
   try {
-    if (!currentUser) await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+    if (!currentUser || currentUser.isAnonymous) {
+      if (currentUser) await firebase.auth().signOut();
+      await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+    }
   } catch(e) { console.warn('Service auth failed:', e); }
   appRole    = isAdmin ? 'admin' : 'subadmin';
   viewerType = appRole;
