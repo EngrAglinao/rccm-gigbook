@@ -726,6 +726,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
       <iconify-icon icon="mdi:chevron-right" style="font-size:22px;color:var(--text-muted);"></iconify-icon>
     </button>
   </div>
+  <p style="color:var(--text-muted);font-size:11px;margin-top:24px;text-align:center;opacity:0.6;">Admin or Sub-Admin? Tap the logo 3× above.</p>
 </div>
 
 <!-- PIN MODAL -->
@@ -1956,7 +1957,7 @@ function handleBackButton() {
     // Setlist opened from user detail → go back to user detail
     if (currentSetlistId !== null && _setlistOpenedFromUserDetail) { closeSetlistFromUserDetail(); return; }
     if (currentSetlistId !== null) { closeSetlistDetail(); return; }
-    if (currentDetailUserId !== null) { closeUserDetail(); return; }
+    if (false) { /* currentDetailUserId removed */ }
     // If not on songs tab, navigate there first instead of closing the app
     if (activeTab !== 'songs') { switchTab('songs'); return; }
     // Already at root of songs tab — let the browser handle (app close)
@@ -1997,12 +1998,10 @@ auth.onAuthStateChanged((user) => {
 });
 
 async function bootApp() {
-  // Load Sub-Admin PIN from Firestore (best-effort, non-blocking)
-  try {
-    const snap = await db.collection('settings').doc('global').get();
-    if (snap.exists && snap.data().subAdminPin) _subAdminPin = snap.data().subAdminPin;
-    // adminPin override reserved for future use
-  } catch(e) { /* offline — use defaults */ }
+  // Load Sub-Admin PIN from Firestore (truly non-blocking — never stops boot)
+  db.collection('settings').doc('global').get()
+    .then(snap => { if (snap.exists && snap.data().subAdminPin) _subAdminPin = snap.data().subAdminPin; })
+    .catch(() => {});
 
   // Check localStorage for saved viewer role
   const savedRole = localStorage.getItem('gb_viewer_type');
@@ -2061,8 +2060,8 @@ function mountApp() {
   // Fade in only main-content to avoid the fixed-position bug
   const mainContent = document.getElementById('main-content');
   if (mainContent) { mainContent.style.opacity = '0'; mainContent.style.transition = 'none'; }
-  // Apply lyrics-only for singers and tech
-  if (viewerType === 'singer' || viewerType === 'tech') {
+  // Apply lyrics-only for singers and tech (never for admin/subadmin)
+  if ((viewerType === 'singer' || viewerType === 'tech') && appRole === 'viewer') {
     lyricsOnlyMode = true;
     const btn = document.getElementById('lyrics-only-toggle-btn');
     if (btn) btn.style.display = 'none';
@@ -2280,16 +2279,21 @@ function syncHeaderFilterDot() {
 function buildNav() { buildBottomNav(); } // compat alias
 function buildBottomNav() {
   const isPrivileged = (appRole === 'admin' || appRole === 'subadmin');
-  const tabs = ['songs','setlists'];
-  tabs.forEach(id => {
+  ['songs','setlists'].forEach(id => {
     const btn = document.getElementById('bnav-' + id);
-    if (!btn) return;
-    btn.classList.toggle('active', activeTab === id);
+    if (btn) btn.classList.toggle('active', activeTab === id);
   });
   const adminBtn = document.getElementById('bnav-admin');
   if (adminBtn) {
     adminBtn.style.display = isPrivileged ? 'flex' : 'none';
+    adminBtn.style.flexDirection = 'column'; // ensure flex children align
     adminBtn.classList.toggle('active', activeTab === 'admin');
+  }
+  // Also update the flex of songs/setlists so admin button gets equal share
+  const nav = document.getElementById('bottom-nav');
+  if (nav) {
+    const visibleBtns = nav.querySelectorAll('.bnav-btn:not([style*="display: none"]):not([style*="display:none"])');
+    visibleBtns.forEach(b => b.style.flex = '1');
   }
 }
 
@@ -2344,7 +2348,7 @@ function switchUsersSubTab(subtab) {
       approvedBtn.style.boxShadow = 'none';
     }
   }
-  renderUsersList();
+  // renderUsersList removed — no users tab
 }
 
 function updateFAB() {
@@ -2389,7 +2393,7 @@ function updateHomeBtn(show) {
   const hamburger = document.getElementById('hamburger-btn');
   const role = currentUserProfile?.role || 'Guest';
   const isGuest = role === 'Guest';
-  const atSongsRoot = activeTab === 'songs' && !currentSongId && !currentSetlistId && !currentDetailUserId;
+  const atSongsRoot = activeTab === 'songs' && !currentSongId && !currentSetlistId;
   const shouldShow = show && !atSongsRoot;
   if (backBtn) backBtn.style.display = shouldShow ? 'flex' : 'none';
   if (hamburger) {
@@ -2427,7 +2431,7 @@ function goHome() {
     return;
   }
   if (currentSetlistId) { closeSetlistDetail(); return; }
-  if (currentDetailUserId) { closeUserDetail(); return; }
+  // currentDetailUserId removed
   // If not on songs tab, go to songs tab first
   if (activeTab !== 'songs') { switchTab('songs'); return; }
 }
@@ -2436,6 +2440,11 @@ function goHome() {
 // FIRESTORE REAL-TIME LISTENERS
 // ============================================================
 function setupListeners() {
+  // Small guard: if auth isn't settled yet, retry once after 800ms
+  if (!currentUser) {
+    setTimeout(setupListeners, 800);
+    return;
+  }
   if (songsUnsubscribe) songsUnsubscribe();
   songsUnsubscribe = db.collection('songs').orderBy('title').onSnapshot(snap => {
     showSyncBar();
@@ -2451,7 +2460,15 @@ function setupListeners() {
       }
     }
     hideSyncBar();
-  }, err => { console.error('Songs listener:', err); hideSyncBar(); });
+  }, err => {
+    console.error('Songs listener:', err);
+    hideSyncBar();
+    const listEl = document.getElementById('songs-list');
+    if (listEl) listEl.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">
+      <iconify-icon icon="mdi:wifi-off" style="font-size:28px;display:block;margin:0 auto 8px;"></iconify-icon>
+      Could not load songs.<br><span style="font-size:11px;">Check your connection or Firestore rules.</span>
+    </div>`;
+  });
 
   if (setlistsUnsubscribe) setlistsUnsubscribe();
   setlistsUnsubscribe = db.collection('setlists').orderBy('createdAt', 'desc').onSnapshot(snap => {
@@ -2711,10 +2728,8 @@ function renderSongsList() {
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
-  const _roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [currentUserProfile?.role || ''];
-  const _abilities = currentUserProfile?.abilities || [];
-  const isAdmin = _appRole === 'admin';
-  const canEdit = isAdmin || _roles.some(r => ['Sub-Admin','Lead'].includes(r)) || _abilities.includes('editSong');
+  // _roles/_abilities removed
+  const canEdit = appRole !== 'viewer';
   listEl.innerHTML = songs.map(song => {
     const fav = isFavourite(song.id);
     // Show the user's saved key for this song if it exists
@@ -2764,11 +2779,9 @@ function renderSongsList() {
 }
 
 function canDeleteSong() {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
+  // roles/abilities removed — use appRole
   return roles.some(r => ['Admin','Sub-Admin'].includes(r)) ||
-    currentUserProfile?.canDeleteSongs === true || abilities.includes('deleteSong');
+    appRole !== 'viewer';
 }
 
 // ─── ADMIN SONG SWIPE GESTURE ───────────────────────────────────────────────
@@ -2949,7 +2962,6 @@ function openSongSheet(songId, fromSetlist) {
 }
 
 function setupSongControls() {
-  const role = currentUserProfile?.role || '';
   const musicianCtrl = document.getElementById('musician-controls');
   const singerCtrl = document.getElementById('singer-controls');
   const techCopyWrap = document.getElementById('tech-copy-btn-wrap');
@@ -3080,7 +3092,6 @@ function isSectionHeader(line) {
 }
 
 function renderSheetContent(content, targetKey, srcKey) {
-  const role = currentUserProfile?.role || '';
   const showChords = !(role === 'Singer' || role === 'Tech' || lyricsOnlyMode);
   const container = document.getElementById('song-sheet-content');
   const lines = content.split('\n');
@@ -3844,11 +3855,9 @@ function _updateSaveSongBtn() {
 }
 
 function openCreateSongModal() {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
+  // roles/abilities removed — use appRole
   const canAdd = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    appRole !== 'viewer' === true || abilities.includes('addSong');
+    appRole !== 'viewer';
   if (!canAdd) { showAlert('Permission Denied', 'You do not have permission to add songs.', 'mdi:lock'); return; }
   document.getElementById('new-song-title').value = '';
   document.getElementById('new-song-artist').value = '';
@@ -4219,101 +4228,56 @@ async function saveSong() {
 // SETLISTS RENDER
 // ============================================================
 function canSeeSetlist(setlist) {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  // Admin sees every setlist
-  if (appRole === 'admin' || abilities.includes('viewPrivateSetlists')) return true;
-  // Custom group: only creator or whitelisted members
-  if (setlist.isCustomGroup) {
-    if (setlist.createdBy === 'service') return true;
-    if (setlist.whitelist && setlist.whitelist.includes('service')) return true;
-    return false;
-  }
-  // Private: only the creator
-  if (setlist.isPrivate && setlist.createdBy !== 'service') return false;
-  // Public: everyone sees it
-  return true;
+  return true; // All setlists are public
 }
 
 function renderSetlistsList() {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const canCreateSetlist = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
-    abilities.includes('createPublicSetlist') || abilities.includes('canCreateSetlist');
-
-  let setlists = allSetlists.filter(s => canSeeSetlist(s));
+  const canCreate = appRole !== 'viewer';
+  let setlists = allSetlists.slice();
   if (setlistSearchQuery) {
     setlists = setlists.filter(s => (s.name||'').toLowerCase().includes(setlistSearchQuery));
   }
-  // Apply type filter
-  if (currentSetlistFilter === 'public') setlists = setlists.filter(s => !s.isPrivate && !s.isCustomGroup);
-  else if (currentSetlistFilter === 'private') setlists = setlists.filter(s => s.isPrivate && !s.isCustomGroup);
-  else if (currentSetlistFilter === 'custom') setlists = setlists.filter(s => s.isCustomGroup);
   if (currentSetlistSort === 'az') setlists.sort((a,b) => (a.name||'').localeCompare(b.name||''));
   else if (currentSetlistSort === 'za') setlists.sort((a,b) => (b.name||'').localeCompare(a.name||''));
   else if (currentSetlistSort === 'newest') setlists.sort((a,b) => (b.createdAt?.toDate?.() || new Date(0)) - (a.createdAt?.toDate?.() || new Date(0)));
   else if (currentSetlistSort === 'oldest') setlists.sort((a,b) => (a.createdAt?.toDate?.() || new Date(0)) - (b.createdAt?.toDate?.() || new Date(0)));
-  const listEl = document.getElementById('setlists-list');
+  const listEl  = document.getElementById('setlists-list');
   const emptyEl = document.getElementById('setlists-empty');
   if (setlists.length === 0) {
     if (listEl) listEl.innerHTML = '';
     if (emptyEl) {
-      const isSearch = !!setlistSearchQuery;
-      const filterLabels = { public: 'public', private: 'private', custom: 'custom group' };
-      const isFiltered = !isSearch && currentSetlistFilter && currentSetlistFilter !== 'all';
-      let icon, title, sub;
-      if (isSearch) {
-        icon = 'mdi:magnify-close';
-        title = `No results for "${escHtml(setlistSearchQuery)}"`;
-        sub = 'Try a different search term.';
-      } else if (isFiltered) {
-        icon = 'mdi:filter-off';
-        title = `No ${filterLabels[currentSetlistFilter] || ''} setlists`;
-        sub = 'Try a different filter, or create one using the + button.';
-      } else {
-        icon = 'mdi:playlist-music';
-        title = 'No setlists yet';
-        sub = canCreateSetlist ? 'Create your first setlist by tapping the + button below.' : 'Setlists created by your team will appear here.';
-      }
-      // Update the existing styled empty element's inner content
-      const iconEl = emptyEl.querySelector('iconify-icon');
-      if (iconEl) iconEl.setAttribute('icon', icon);
+      const iconEl  = emptyEl.querySelector('iconify-icon');
       const titleEl = emptyEl.querySelector('p:first-of-type');
-      if (titleEl) titleEl.textContent = title;
-      const subEl = emptyEl.querySelectorAll('p')[1];
-      if (subEl) subEl.textContent = sub;
+      const subEl   = emptyEl.querySelectorAll('p')[1];
       const createBtn = document.getElementById('setlists-empty-create-btn');
-      if (createBtn) createBtn.style.display = canCreateSetlist && !isSearch && !isFiltered ? 'inline-flex' : 'none';
+      if (setlistSearchQuery) {
+        if (iconEl)  iconEl.setAttribute('icon', 'mdi:magnify-close');
+        if (titleEl) titleEl.textContent = `No results for "${setlistSearchQuery}"`;
+        if (subEl)   subEl.textContent   = 'Try a different search term.';
+      } else {
+        if (iconEl)  iconEl.setAttribute('icon', 'mdi:playlist-music');
+        if (titleEl) titleEl.textContent = 'No setlists yet';
+        if (subEl)   subEl.textContent   = canCreate ? 'Create your first setlist using the + button.' : 'Setlists will appear here.';
+      }
+      if (createBtn) createBtn.style.display = canCreate && !setlistSearchQuery ? 'inline-flex' : 'none';
       emptyEl.style.display = 'block';
     }
     return;
   }
   if (emptyEl) emptyEl.style.display = 'none';
   listEl.innerHTML = setlists.map(setlist => {
-    const isOwner = setlist.createdBy === 'service';
-    const _roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [currentUserProfile?.role || ''];
-    const _abilities = currentUserProfile?.abilities || [];
-    const canEdit = isOwner || _roles.some(r => ['Admin','Sub-Admin'].includes(r)) || _abilities.includes('editSetlist') || _abilities.includes('deleteSetlist');
-    const badgeHtml = setlist.isCustomGroup
-      ? `<span class="privacy-badge badge-custom">⚡ Custom Group</span>`
-      : setlist.isPrivate
-        ? `<span class="privacy-badge badge-private">🔒 Private</span>`
-        : `<span class="privacy-badge badge-public">🌐 Public</span>`;
+    const canEdit = appRole !== 'viewer';
+    const songCount = setlist.songs ? setlist.songs.length : 0;
     return `
     <div class="setlist-card" onclick="openSetlistDetail('${setlist.id}')" style="cursor:pointer;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <p style="color:var(--lyrics-color);font-size:14px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(setlist.name)}</p>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
-            ${badgeHtml}
-            <span style="color:var(--text-muted);font-size:11px;">${setlist.songs ? setlist.songs.length : 0} songs</span>
+          <p style="color:var(--lyrics-color);font-size:14px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(setlist.name || 'Untitled')}</p>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span style="color:var(--text-muted);font-size:11px;">${songCount} song${songCount !== 1 ? 's' : ''}</span>
           </div>
-          ${setlist.isCustomGroup && setlist.whitelist && setlist.whitelist.length > 0 ? renderWhitelistAvatars(setlist.whitelist) : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:0px;flex-shrink:0;">
-          ${canEdit && isOwner ? `<button onclick="event.stopPropagation();toggleSetlistPrivacy('${setlist.id}',${setlist.isPrivate})" class="list-icon-btn" title="${setlist.isPrivate ? 'Make Public' : 'Make Private'}"><iconify-icon icon="${setlist.isPrivate ? 'mdi:lock-open' : 'mdi:lock'}" style="font-size:18px;"></iconify-icon></button>` : ''}
+        <div style="display:flex;align-items:center;gap:0;flex-shrink:0;">
           ${canEdit ? `<button onclick="event.stopPropagation();deleteSetlist('${setlist.id}')" class="list-icon-btn danger" title="Delete Setlist"><iconify-icon icon="mdi:delete" style="font-size:18px;"></iconify-icon></button>` : ''}
         </div>
       </div>
@@ -4321,13 +4285,13 @@ function renderSetlistsList() {
   }).join('');
 }
 
-async function toggleSetlistPrivacy(id, isPrivate) {
-  try { await db.collection('setlists').doc(id).update({ isPrivate: !isPrivate }); } catch(e) { console.error(e); }
-}
+
+// toggleSetlistPrivacy removed — all setlists are public
 
 async function deleteSetlist(id) {
+  if (appRole === 'viewer') return;
   if (!confirm('Delete this setlist?')) return;
-  const role = currentUserProfile?.role || '';
+  const role = '';
   const setlist = allSetlists.find(s => s.id === id);
   if (!setlist) return;
   if (role !== 'Admin' && setlist.createdBy !== 'service') { showAlert('Permission Denied', 'You can only delete your own setlists.', 'mdi:lock'); return; }
@@ -4372,11 +4336,9 @@ function closeSetlistDetail() {
 }
 
 function renderSetlistDetail(setlist) {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
+  // roles/abilities removed — use appRole
   const isOwner = setlist.createdBy === 'service';
-  const canEdit = isOwner || roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) || abilities.includes('editSetlist');
+  const canEdit = appRole !== 'viewer';
   const isTech = roles.includes('Tech');
   const detail = document.getElementById('setlist-detail-view');
   const songs = currentSetlistSongs.map(sid => allSongs.find(s => s.id === sid)).filter(Boolean);
@@ -4432,7 +4394,7 @@ async function loadSetlistCreator(uid) {
     const isOwner = uid === 'service';
     const canManage = isOwner || myRoles.includes('Admin');
     const setlist = allSetlists.find(s => s.id === currentSetlistId);
-    const isCustomGroup = setlist?.isCustomGroup;
+    const isCustomGroup = false;
     document.getElementById('setlist-creator-info').innerHTML = `
       <div style="display:flex;align-items:center;gap:6px;">
         <img src="${escHtml(d.photoURL||'')}" title="${escHtml(d.displayName||'')}"
@@ -4440,7 +4402,7 @@ async function loadSetlistCreator(uid) {
           onclick="openCreatorProfile('${uid}')"
           onmouseover="this.style.borderColor='var(--accent)'"
           onmouseout="this.style.borderColor='var(--border-subtle)'" />
-        ${isCustomGroup && canManage ? `<button onclick="openManageMembersModal()" title="Manage Members"
+        ${false ? `<button onclick="openManageMembersModal()" title="Manage Members"
           style="background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;"
           onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background='var(--surface-2)'">
           <iconify-icon icon="mdi:account-multiple-plus" style="font-size:16px;color:var(--accent);"></iconify-icon>
@@ -4455,7 +4417,7 @@ async function loadSetlistCreator(uid) {
 // ============================================================
 function openManageMembersModal() {
   const setlist = allSetlists.find(s => s.id === currentSetlistId);
-  if (!setlist || !setlist.isCustomGroup) return;
+  if (true) return; // custom groups removed
   document.getElementById('manage-members-search').value = '';
   renderManageCurrentMembers();
   renderManageAddList('');
@@ -4647,10 +4609,7 @@ function renderSongSelectorList(query) {
     `).join('');
 }
 
-function isCustomGroupSetlist(id) {
-  const s = allSetlists.find(s => s.id === id);
-  return s && s.isCustomGroup;
-}
+function isCustomGroupSetlist(id) { return false; }
 
 async function addSongToSetlist(songId) {
   const limit = getSetlistSongLimit();
@@ -4673,36 +4632,18 @@ async function addSongToSetlist(songId) {
 // CREATE SETLIST MODAL
 // ============================================================
 function openCreateSetlistModal() {
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const canCreatePublic = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) || abilities.includes('createPublicSetlist') || abilities.includes('canCreateSetlist');
-  const canCreatePrivate = appRole === 'admin' || abilities.includes('createPrivateSetlist');
-  const canCreateCustom = appRole === 'admin' || abilities.includes('createCustomSetlist');
-
-  if (!canCreatePublic && !canCreatePrivate && !canCreateCustom) {
-    showAlert('Permission Denied', 'You do not have permission to create setlists.', 'mdi:lock');
+  if (appRole === 'viewer') {
+    showAlert('Permission Denied', 'Only Admin or Sub-Admin can create setlists.', 'mdi:lock');
     return;
   }
   document.getElementById('new-setlist-name').value = '';
-  document.getElementById('new-setlist-private').checked = false;
-  document.getElementById('new-setlist-custom').checked = false;
-  document.getElementById('custom-group-users-section').style.display = 'none';
-  const spacer = document.getElementById('setlist-spacer');
-  if (spacer) spacer.style.display = 'block';
-  selectedCustomMembers = [];
-  const scm = document.getElementById('selected-custom-members');
-  if (scm) scm.innerHTML = '';
-  toggleCustomGroupUI(false); // also resets the Private toggle's enabled/disabled state
-
-  // Show/hide private option based on role
+  // Hide private/custom-group options — all setlists are public
   const privateSection = document.getElementById('private-setlist-section');
-  if (privateSection) privateSection.style.display = canCreatePrivate ? 'flex' : 'none';
-
-  // Show/hide custom group option
+  if (privateSection) privateSection.style.display = 'none';
   const cgSection = document.getElementById('custom-group-section');
-  if (cgSection) cgSection.style.display = canCreateCustom ? 'flex' : 'none';
-
+  if (cgSection) cgSection.style.display = 'none';
+  const spacer = document.getElementById('setlist-spacer');
+  if (spacer) spacer.style.display = 'none';
   document.getElementById('create-setlist-modal').style.display = 'flex';
   _animateModalIn(document.getElementById('create-setlist-modal'));
   pushState();
@@ -4781,7 +4722,6 @@ function toggleCustomMember(uid) {
 async function saveSetlist() {
   const name = document.getElementById('new-setlist-name').value.trim();
   if (!name) { showAlert('Missing Info', 'Please enter a setlist name.', 'mdi:alert-circle'); return; }
-  const role = currentUserProfile?.role || '';
   const isAdmin = appRole === 'admin';
 
   // Enforce setlist creation limit (Admin = unlimited, everyone else = 3 by default)
@@ -4795,19 +4735,12 @@ async function saveSetlist() {
     }
   }
 
-  // Only Admin, Sub-Admin, Lead can create custom group setlists
-  const canCreateCustom = appRole !== 'viewer';
-  const isCustomGroup = canCreateCustom && document.getElementById('new-setlist-custom').checked;
-
-  // If custom group, it's neither public nor private in the normal sense
-  const isPrivate = !isCustomGroup && document.getElementById('new-setlist-private').checked;
-
   const data = {
-    name, isPrivate, isCustomGroup, songs: [],
+    name, isPrivate: false, isCustomGroup: false, songs: [],
     createdBy: 'service',
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
-  if (isCustomGroup) data.whitelist = selectedCustomMembers;
+
   try {
     const docRef = await db.collection('setlists').add(data);
     closeCreateSetlistModal();
@@ -4821,87 +4754,7 @@ async function saveSetlist() {
 // ============================================================
 // USERS RENDER
 // ============================================================
-function renderUsersList() {
-  const search = (document.getElementById('user-search-input')?.value || '').toLowerCase();
-  const filter = userFilterActive;
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const isAdmin = appRole === 'admin';
-  const canSeeUnapproved = isAdmin || abilities.includes('viewUnapprovedUsers');
-
-  let users = allUsers.filter(u => {
-    // Admin sub-tab filtering
-    if (isAdmin) {
-      if (currentUsersSubTab === 'approved') {
-        if (!u.approved && u.role === 'Guest') return false;
-      } else {
-        // unapproved sub-tab: only show unapproved Guest accounts
-        if (u.approved !== false || u.role !== 'Guest') return false;
-        if (u.email === ADMIN_EMAIL) return false;
-      }
-    } else if (canSeeUnapproved) {
-      // Non-admin with ability can see unapproved
-      if (!u.approved && u.role === 'Guest') return false; // hide in normal view unless sub-tab
-    } else {
-      // Sub-Admin, Lead: only approved users
-      if (!u.approved && u.role === 'Guest') return false;
-    }
-    const matchSearch = (u.displayName||'').toLowerCase().includes(search) || (u.email||'').toLowerCase().includes(search);
-    const matchFilter = filter === 'all' || u.role === filter || (Array.isArray(u.roles) && u.roles.includes(filter));
-    return matchSearch && matchFilter;
-  });
-
-  // Update unapproved count badge
-  const unapprovedCount = allUsers.filter(u => u.approved === false && u.role === 'Guest' && u.email !== ADMIN_EMAIL).length;
-  const badge = document.getElementById('unapproved-count-badge');
-  if (badge) {
-    badge.textContent = unapprovedCount;
-    badge.style.display = unapprovedCount > 0 ? 'inline-block' : 'none';
-  }
-
-  const listEl = document.getElementById('users-list');
-  const usersEmptyEl = document.getElementById('users-empty');
-  if (!listEl) return;
-  if (usersEmptyEl) usersEmptyEl.style.display = users.length === 0 ? 'block' : 'none';
-  if (users.length === 0) { listEl.innerHTML = ''; return; }
-
-  const canEditAny = roles.some(r => ['Admin','Sub-Admin'].includes(r)) || abilities.includes('approveUsers') || abilities.includes('changeUserRole');
-  const canDeleteAny = isAdmin || abilities.includes('deleteUsers');
-
-  listEl.innerHTML = users.map(u => {
-    const instruments = (u.instruments||[]).join(', ');
-    const isAdminUser = u.email === ADMIN_EMAIL;
-    const canEdit = canEditAny && !isAdminUser;
-    const canDelete = canDeleteAny && !isAdminUser;
-    const isPending = u.approved === false;
-    return `
-    <div class="user-row" onclick="openUserDetail('${u.uid}')" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
-      <div style="position:relative;flex-shrink:0;">
-        <img src="${escHtml(u.photoURL||'')}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--surface-2);" onerror="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--surface-2')" />
-        ${isPending ? '<span style="position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:#f59e0b;border-radius:50%;border:2px solid var(--surface-1);display:flex;align-items:center;justify-content:center;"><iconify-icon icon=\'mdi:clock\' style=\'font-size:8px;color:#fff;\'></iconify-icon></span>' : ''}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <p style="color:var(--lyrics-color);font-size:14px;font-weight:600;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(u.displayName||'')}</p>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          ${isPending ? '<span style="background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:700;">Pending</span>' : ''}
-          ${renderUserBadges(u)}
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:0;flex-shrink:0;" onclick="event.stopPropagation()">
-        ${isPending && isAdmin ? `<button onclick="approveUser('${u.uid}')" class="list-icon-btn" title="Approve User" style="color:#34d399;">
-          <iconify-icon icon="mdi:account-check" style="font-size:18px;"></iconify-icon>
-        </button>` : ''}
-        ${canEdit ? `<button onclick="openUserEditModal('${u.uid}')" class="list-icon-btn" title="Edit User">
-          <iconify-icon icon="mdi:pencil" style="font-size:18px;"></iconify-icon>
-        </button>` : ''}
-        ${canDelete ? `<button onclick="deleteUser('${u.uid}')" class="list-icon-btn danger" title="Delete User">
-          <iconify-icon icon="mdi:delete" style="font-size:18px;"></iconify-icon>
-        </button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
+function renderUsersList() { return; } // users tab removed
 
 function getRoleBadgeClass(role) {
   const map = { 'Admin':'badge-admin','Sub-Admin':'badge-subadmin','Lead':'badge-lead','Musician':'badge-musician','Singer':'badge-singer','Tech':'badge-tech','Guest':'badge-guest' };
@@ -4992,19 +4845,12 @@ function openUserDetail(uid) {
     ${userSetlists.length === 0
       ? '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0;">No visible setlists.</p>'
       : `<div style="display:flex;flex-direction:column;gap:var(--list-gap);">` + userSetlists.map(s => {
-          const isPublic = !s.isPrivate && !s.isCustomGroup;
-          const badgeHtml = s.isCustomGroup
-            ? `<span class="privacy-badge badge-custom">⚡ Custom Group</span>`
-            : s.isPrivate
-              ? `<span class="privacy-badge badge-private">🔒 Private</span>`
-              : `<span class="privacy-badge badge-public">🌐 Public</span>`;
+          const isPublic = true;
           return `
           <div class="setlist-card" onclick="openSetlistDetailFromUser('${s.id}')" style="cursor:pointer;">
             <p style="color:var(--lyrics-color);font-size:14px;font-weight:600;margin:0 0 6px;">${escHtml(s.name)}</p>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              ${badgeHtml}
               <span style="color:var(--text-muted);font-size:11px;">${s.songs ? s.songs.length : 0} songs</span>
-              ${s.isCustomGroup && s.whitelist && s.whitelist.length ? renderWhitelistAvatars(s.whitelist) : ''}
             </div>
           </div>`;
         }).join('') + `</div>`}
@@ -5111,7 +4957,7 @@ function closeUserDetail() {
   updateHomeBtn(false);
 }
 
-function filterUsers() { renderUsersList(); }
+function filterUsers() { /* users tab removed */ }
 function toggleUserFilterMenu() {
   positionFloatingMenu('user-filter-menu');
 }
@@ -5168,10 +5014,8 @@ async function deleteUser(uid) {
 async function approveUser(uid) {
   const u = allUsers.find(x => x.uid === uid);
   if (!u) return;
-  const role = currentUserProfile?.role || '';
-  const roles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [role];
-  const abilities = currentUserProfile?.abilities || [];
-  const isAdmin = appRole === 'admin' || abilities.includes('approveUsers');
+  // roles/abilities removed — use appRole
+  const isAdmin = appRole === 'admin';
   if (!isAdmin) { showAlert('Permission Denied', 'Only Admin can approve users.', 'mdi:lock'); return; }
   // Open the edit modal to let Admin assign a role when approving
   openUserEditModalForApproval(uid);
@@ -5438,90 +5282,13 @@ async function saveUserEdit() {
 // PROFILE VIEW
 // ============================================================
 function openProfileView() {
-  populateProfileTab();
-  switchTab('profile');
+  switchTab('songs'); // profile tab removed
 }
 
-function populateProfileTab() {
-  const p = currentUserProfile;
-  if (!p) return;
-  const pic = document.getElementById('profile-view-pic');
-  const placeholder = document.getElementById('profile-view-placeholder');
-  if (pic) {
-    if (p.photoURL) {
-      pic.src = p.photoURL;
-      pic.style.display = 'block';
-      if (placeholder) placeholder.style.display = 'none';
-      pic.onerror = () => { pic.style.display='none'; if(placeholder) placeholder.style.display='block'; };
-    } else {
-      pic.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
-    }
-  }
-  const nameEl = document.getElementById('profile-view-name');
-  if (nameEl) nameEl.textContent = p.displayName || '';
-  const roles = Array.isArray(p.roles) ? p.roles : (p.role ? [p.role] : ['Guest']);
-  const roleBadge = document.getElementById('profile-view-role-badge');
-  if (roleBadge) {
-    roleBadge.className = 'role-badge ' + getRoleBadgeClass(roles[0]);
-    roleBadge.textContent = roles.join(' · ');
-    if (p.approved === false) {
-      roleBadge.textContent = '⏳ Pending Approval';
-      roleBadge.className = 'role-badge badge-guest';
-    }
-  }
-  const instInline = document.getElementById('profile-view-instruments-inline');
-  if (instInline) instInline.textContent = (p.instruments||[]).length ? (p.instruments||[]).join(' · ') : '';
-  const tutToggle = document.getElementById('tutorial-toggle');
-  if (tutToggle) { tutToggle.checked = p.showTutorial !== false; }
-  tutorialEnabled = p.showTutorial !== false;
-  const adminBtn = document.getElementById('profile-admin-btn');
-  if (adminBtn) adminBtn.style.display = appRole === 'admin' ? 'flex' : 'none';
-  const closeBtn = document.getElementById('profile-close-btn');
-  if (closeBtn) closeBtn.style.display = (p.role === 'Guest') ? 'flex' : 'none';
-  const signedInEl = document.getElementById('profile-signed-in-as');
-  if (signedInEl) signedInEl.textContent = currentUser?.email || '';
-  renderProfileSetlists();
-  buildNav(); // refresh sidebar avatar/name
-}
+function populateProfileTab() { return; } // profile tab removed
 
-function renderProfileSetlists() {
-  const mySetlists = allSetlists.filter(s => s.createdBy === 'service');
-  const container = document.getElementById('profile-my-setlists');
-  const empty = document.getElementById('profile-setlists-empty');
-  if (!mySetlists.length) {
-    if (container) container.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-  if (container) container.innerHTML = mySetlists.map(s => `
-    <div class="setlist-card" style="cursor:pointer;" onclick="switchTab('setlists');openSetlistDetail('${s.id}')">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div style="flex:1;min-width:0;">
-          <p style="color:var(--lyrics-color);font-size:13px;font-weight:600;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.name)}</p>
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span class="privacy-badge ${s.isPrivate ? 'badge-private' : 'badge-public'}">${s.isPrivate ? '🔒 Private' : '🌐 Public'}</span>
-            ${s.isCustomGroup ? '<span class="privacy-badge badge-custom">⚡ Custom</span>' : ''}
-            <span style="color:var(--text-muted);font-size:11px;">${s.songs ? s.songs.length : 0} songs</span>
-          </div>
-        </div>
-        <button onclick="event.stopPropagation();deleteSetlist('${s.id}')" class="list-icon-btn danger" title="Delete Setlist">
-          <iconify-icon icon="mdi:delete" style="font-size:18px;"></iconify-icon>
-        </button>
-      </div>
-    </div>`).join('');
-}
-
-function closeProfileAndOpenSetlist(id) {
-  switchTab('setlists');
-  openSetlistDetail(id);
-}
-
-function closeProfileView() {
-  const role = currentUserProfile?.role || 'Guest';
-  switchTab(role === 'Guest' ? 'setlists' : 'songs');
-}
+function renderProfileSetlists() { return; } // profile tab removed
+function closeProfileView() { switchTab('songs'); }
 
 async function saveTutorialPref(val) {
   tutorialEnabled = val;
@@ -5670,16 +5437,24 @@ async function checkPin() {
   localStorage.setItem('gb_app_role', appRole);
   currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
   closePinModal();
-  // Force show chords for admin/subadmin
+  // Force admin button visible immediately after role is set
+  const _adminBtn = document.getElementById('bnav-admin');
+  if (_adminBtn) { _adminBtn.style.display = 'flex'; _adminBtn.style.flexDirection = 'column'; }
+  // Force show chords for admin/subadmin — never lyrics-only
   lyricsOnlyMode = false;
   const lyricsBtn = document.getElementById('lyrics-only-toggle-btn');
   if (lyricsBtn) lyricsBtn.style.display = '';
+  // If app isn't mounted yet (admin tapped logo on role picker), mount it now
+  const appRoot = document.getElementById('app-root');
+  if (!appRoot || appRoot.style.display === 'none' || appRoot.style.display === '') {
+    mountApp();
+  }
   buildBottomNav();
   updateRoleBadge();
   updateFAB();
   renderSongsList();
   renderSetlistsList();
-  if (isAdmin || !isAdmin) switchTab('admin');
+  switchTab('admin');
   showAlert(isAdmin ? 'Admin Mode' : 'Sub-Admin Mode',
     isAdmin ? 'Welcome, Admin.' : 'Welcome, Sub-Admin.', 'mdi:shield-crown');
 }
@@ -5929,7 +5704,6 @@ function handleImportFileSelect(input) {
 
 async function confirmImportSongs() {
   if (!_importSongsPending.length) return;
-  const role = currentUserProfile?.role || '';
   if (role !== 'Admin') { showAlert('Access Denied', 'Only admins can import songs.', 'mdi:lock'); return; }
   const btn = document.getElementById('import-songs-confirm-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
@@ -6006,7 +5780,6 @@ function downloadSampleSongsFile() {
 }
 
 async function saveAdminSettings() {
-  const role = currentUserProfile?.role || '';
   if (role !== 'Admin') return;
   const name = document.getElementById('admin-app-name').value.trim();
   showSyncToast();
@@ -6061,7 +5834,6 @@ function toggleAdminSection(id) {
 }
 
 async function saveGlobalSongLimit() {
-  const role = currentUserProfile?.role || '';
   if (role !== 'Admin') return;
   const val = parseInt(document.getElementById('admin-song-limit')?.value) || 4;
   globalSongLimit = val;
@@ -6609,7 +6381,6 @@ async function runTTLCleanup() {
 }
 
 async function saveSetlistTTL() {
-  const role = currentUserProfile?.role || '';
   if (role !== 'Admin') return;
   const val = parseInt(document.getElementById('admin-setlist-ttl')?.value) || 7;
   globalSetlistTTLDays = val;
@@ -6628,7 +6399,6 @@ let _dasCode = null;
 let _dasCodeExpiry = null;
 
 function initiateDeleteAllSetlists() {
-  const role = currentUserProfile?.role || '';
   if (role !== 'Admin') return;
   // Reset modal to step 1
   document.getElementById('das-step-1').style.display = 'block';
@@ -6763,7 +6533,7 @@ function showSetlistLimitModal(maxAllowed) {
       <div style="flex:1;min-width:0;">
         <p style="color:var(--lyrics-color);font-size:13px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.name)}</p>
         <p style="color:var(--text-muted);font-size:11px;margin:2px 0 0;">
-          ${s.isCustomGroup ? '⚡ Custom' : s.isPrivate ? '🔒 Private' : '🌐 Public'}
+          Public
           · ${s.songs ? s.songs.length : 0} song${s.songs && s.songs.length !== 1 ? 's' : ''}
         </p>
       </div>
