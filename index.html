@@ -1984,43 +1984,58 @@ window.addEventListener('pageshow', () => {
   closeAllDropdowns();
 });
 
+// Single auth entry point — called once when Firebase auth state is known
+let _bootDone = false;
 auth.onAuthStateChanged((user) => {
   currentUser = user;
   clearTimeout(_splashTimer);
-  if (!user) {
-    firebase.auth().signInAnonymously().catch(e => {
-      console.warn('Anon auth failed, booting anyway:', e);
-      bootApp();
-    });
-  } else {
-    bootApp();
-  }
+  if (_bootDone) return; // already booted — ignore subsequent auth state changes
+  _bootDone = true;
+  bootApp();
 });
 
 async function bootApp() {
-  // Load Sub-Admin PIN from Firestore (truly non-blocking — never stops boot)
+  // Load Sub-Admin PIN non-blocking
   db.collection('settings').doc('global').get()
     .then(snap => { if (snap.exists && snap.data().subAdminPin) _subAdminPin = snap.data().subAdminPin; })
     .catch(() => {});
 
-  // Check localStorage for saved viewer role
-  const savedRole = localStorage.getItem('gb_viewer_type');
-  const savedAppRole = localStorage.getItem('gb_app_role');
+  const savedAppRole  = localStorage.getItem('gb_app_role');
+  const savedViewerType = localStorage.getItem('gb_viewer_type');
+
+  // ── Admin / Sub-Admin returning user ─────────────────────────
   if (savedAppRole === 'admin' || savedAppRole === 'subadmin') {
+    // Sign in as service account so writes work
     try {
-      if (!currentUser || currentUser.isAnonymous) {
-        await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
-      }
-      appRole    = savedAppRole;
-      viewerType = savedAppRole;
-      currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
-      mountApp();
-      setTimeout(() => { buildBottomNav(); updateRoleBadge(); switchTab('admin'); }, 80);
+      await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+      currentUser = firebase.auth().currentUser;
+    } catch(e) {
+      console.warn('Service sign-in failed, falling back to viewer:', e);
+      localStorage.removeItem('gb_app_role');
+      startAsViewer(savedViewerType);
       return;
-    } catch(e) { console.warn('Re-auth failed:', e); localStorage.removeItem('gb_app_role'); }
+    }
+    appRole    = savedAppRole;
+    viewerType = 'admin'; // full access
+    currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
+    mountApp();
+    return;
   }
-  if (savedRole) {
-    viewerType = savedRole;
+
+  // ── Regular viewer ────────────────────────────────────────────
+  // Ensure anonymous auth for Firestore reads
+  if (!currentUser) {
+    try {
+      await firebase.auth().signInAnonymously();
+      currentUser = firebase.auth().currentUser;
+    } catch(e) { console.warn('Anon auth failed:', e); }
+  }
+  startAsViewer(savedViewerType);
+}
+
+function startAsViewer(savedType) {
+  if (savedType) {
+    viewerType = savedType;
     appRole    = 'viewer';
     currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
     mountApp();
@@ -2036,11 +2051,14 @@ function exitAdminMode() {
   localStorage.removeItem('gb_app_role');
   currentUserProfile = { role: 'Guest', roles: ['Guest'], canAddSongs: false, canDeleteSongs: false };
   firebase.auth().signOut().then(() => {
-    firebase.auth().signInAnonymously().catch(() => {});
+    firebase.auth().signInAnonymously()
+      .then(r => { currentUser = r.user; })
+      .catch(() => {});
   }).catch(() => {});
   updateRoleBadge();
   buildBottomNav();
   updateFAB();
+  switchTab('songs');
 }
 function signOut() { exitAdminMode(); } // compat alias
 
@@ -2068,6 +2086,14 @@ function mountApp() {
   }
   buildBottomNav();
   updateRoleBadge();
+  // Set correct starting tab
+  if (appRole === 'admin' || appRole === 'subadmin') {
+    activeTab = 'admin';
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const ap = document.getElementById('tab-admin');
+    if (ap) ap.classList.add('active');
+    buildBottomNav();
+  }
   setupListeners();
   checkDesktop();
   pushState();
@@ -2440,11 +2466,6 @@ function goHome() {
 // FIRESTORE REAL-TIME LISTENERS
 // ============================================================
 function setupListeners() {
-  // Small guard: if auth isn't settled yet, retry once after 800ms
-  if (!currentUser) {
-    setTimeout(setupListeners, 800);
-    return;
-  }
   if (songsUnsubscribe) songsUnsubscribe();
   songsUnsubscribe = db.collection('songs').orderBy('title').onSnapshot(snap => {
     showSyncBar();
@@ -5424,37 +5445,37 @@ async function checkPin() {
     updatePinDots();
     return;
   }
-  // Silent Firebase sign-in for write access
-  // Must sign out anonymous user first before signing in as service account
+  // Sign in as service account for write access
   try {
-    if (!currentUser || currentUser.isAnonymous) {
+    if (currentUser && !currentUser.isAnonymous) {
+      // already signed in as service account
+    } else {
       if (currentUser) await firebase.auth().signOut();
       await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+      currentUser = firebase.auth().currentUser;
     }
   } catch(e) { console.warn('Service auth failed:', e); }
   appRole    = isAdmin ? 'admin' : 'subadmin';
-  viewerType = appRole;
+  viewerType = 'admin';
   localStorage.setItem('gb_app_role', appRole);
   currentUserProfile = { role: _roleShim(), roles: [_roleShim()], canAddSongs: true, canDeleteSongs: true, approved: true };
   closePinModal();
-  // Force admin button visible immediately after role is set
-  const _adminBtn = document.getElementById('bnav-admin');
-  if (_adminBtn) { _adminBtn.style.display = 'flex'; _adminBtn.style.flexDirection = 'column'; }
-  // Force show chords for admin/subadmin — never lyrics-only
   lyricsOnlyMode = false;
   const lyricsBtn = document.getElementById('lyrics-only-toggle-btn');
   if (lyricsBtn) lyricsBtn.style.display = '';
-  // If app isn't mounted yet (admin tapped logo on role picker), mount it now
+  // If app not yet mounted (PIN entered from role picker screen), mount first
   const appRoot = document.getElementById('app-root');
-  if (!appRoot || appRoot.style.display === 'none' || appRoot.style.display === '') {
-    mountApp();
+  const notMounted = !appRoot || appRoot.style.display === 'none' || appRoot.style.display === '';
+  if (notMounted) {
+    mountApp(); // mountApp handles tab + buildBottomNav for admin
+  } else {
+    buildBottomNav();
+    updateRoleBadge();
+    updateFAB();
+    renderSongsList();
+    renderSetlistsList();
+    switchTab('admin');
   }
-  buildBottomNav();
-  updateRoleBadge();
-  updateFAB();
-  renderSongsList();
-  renderSetlistsList();
-  switchTab('admin');
   showAlert(isAdmin ? 'Admin Mode' : 'Sub-Admin Mode',
     isAdmin ? 'Welcome, Admin.' : 'Welcome, Sub-Admin.', 'mdi:shield-crown');
 }
