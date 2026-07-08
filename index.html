@@ -2078,12 +2078,14 @@ function mountApp() {
   // Fade in only main-content to avoid the fixed-position bug
   const mainContent = document.getElementById('main-content');
   if (mainContent) { mainContent.style.opacity = '0'; mainContent.style.transition = 'none'; }
-  // Apply lyrics-only for singers and tech (never for admin/subadmin)
-  if ((viewerType === 'singer' || viewerType === 'tech') && appRole === 'viewer') {
-    lyricsOnlyMode = true;
-    const btn = document.getElementById('lyrics-only-toggle-btn');
-    if (btn) btn.style.display = 'none';
+  // Apply lyrics-only mode based on role
+  lyricsOnlyMode = getLyricsOnlyPref();
+  const lyricsToggle = document.getElementById('lyrics-only-toggle-btn');
+  if (lyricsToggle) {
+    // Singer and tech can't toggle — always lyrics only
+    lyricsToggle.style.display = (viewerType === 'singer' || viewerType === 'tech') ? 'none' : '';
   }
+  applyLyricsOnlyUI();
   buildBottomNav();
   updateRoleBadge();
   // Set correct starting tab
@@ -2386,10 +2388,10 @@ function updateFAB() {
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
   const setlistDetailOpen = currentSetlistId !== null;
 
-  const onSongList = activeTab === 'songs' && !songSheetOpen;
+  const onSongList = activeTab === 'songs' && !songSheetOpen && !setlistDetailOpen;
   const onSetlistList = activeTab === 'setlists' && !setlistDetailOpen && !songSheetOpen;
   const showFab = (onSongList && canCreateSong) || (onSetlistList && canCreateSetlist);
-  fabEl.style.display = showFab ? 'flex' : 'none';
+  if (fabEl) fabEl.style.display = showFab ? 'flex' : 'none';
   // Update FAB icon based on context
   if (fabIcon) {
     fabIcon.setAttribute('icon', onSetlistList ? 'mdi:playlist-plus' : 'mdi:plus');
@@ -2407,57 +2409,34 @@ function updateFAB() {
   updateAutoscrollFabPosition();
 }
 function handleFabClick() {
-  if (activeTab === 'setlists') {
+  if (appRole === 'viewer') return;
+  if (activeTab === 'setlists' && !currentSetlistId) {
     openCreateSetlistModal();
-  } else {
+  } else if (activeTab === 'songs' && !currentSongId) {
     openCreateSongModal();
   }
 }
 
 function updateHomeBtn(show) {
   const backBtn = document.getElementById('home-btn');
-  const hamburger = document.getElementById('hamburger-btn');
-  const role = currentUserProfile?.role || 'Guest';
-  const isGuest = role === 'Guest';
-  const atSongsRoot = activeTab === 'songs' && !currentSongId && !currentSetlistId;
-  const shouldShow = show && !atSongsRoot;
+  const atRoot = (activeTab === 'songs' && !currentSongId && !currentSetlistId)
+              || (activeTab === 'setlists' && !currentSetlistId && !currentSongId)
+              || activeTab === 'admin';
+  const shouldShow = show && !atRoot;
   if (backBtn) backBtn.style.display = shouldShow ? 'flex' : 'none';
-  if (hamburger) {
-    hamburger.style.display = shouldShow ? 'none' : 'flex';
-    // Keep Guest profile icon intact when back button hides
-    if (!shouldShow && isGuest) {
-      const photoURL = currentUserProfile?.photoURL || '';
-      hamburger.innerHTML = '';
-      if (photoURL) {
-        const img = document.createElement('img');
-        img.src = photoURL;
-        img.style.cssText = 'width:30px;height:30px;border-radius:50%;object-fit:cover;';
-        hamburger.appendChild(img);
-      } else {
-        hamburger.innerHTML = '<iconify-icon icon="mdi:account-circle" style="font-size:26px;"></iconify-icon>';
-      }
-      hamburger.onclick = () => openProfileView();
-    }
-  }
-  // Hide floating search/filter on admin/profile tabs or when drilling into detail views
+  // Hide search/filter when drilling into detail or on admin tab
   const actions = document.getElementById('header-actions');
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
   if (actions) {
-    const noSearchNeeded = ['admin','profile'].includes(activeTab) || songSheetOpen;
+    const noSearchNeeded = activeTab === 'admin' || songSheetOpen;
     actions.style.display = noSearchNeeded ? 'none' : 'flex';
   }
 }
 
 function goHome() {
-  // goHome is called by the back arrow button in the top nav
   if (currentSongId) { closeSongSheet(); return; }
-  // If setlist was opened from user detail, go back to that user detail
-  if (currentSetlistId && _setlistOpenedFromUserDetail) {
-    closeSetlistFromUserDetail();
-    return;
-  }
   if (currentSetlistId) { closeSetlistDetail(); return; }
-  // currentDetailUserId removed
+  // _setlistOpenedFromUserDetail removed
   // If not on songs tab, go to songs tab first
   if (activeTab !== 'songs') { switchTab('songs'); return; }
 }
@@ -2982,17 +2961,12 @@ function openSongSheet(songId, fromSetlist) {
 
 function setupSongControls() {
   const musicianCtrl = document.getElementById('musician-controls');
-  const singerCtrl = document.getElementById('singer-controls');
+  const singerCtrl   = document.getElementById('singer-controls');
   const techCopyWrap = document.getElementById('tech-copy-btn-wrap');
-  if (role === 'Singer' || role === 'Tech') {
-    musicianCtrl.style.display = 'none';
-    singerCtrl.style.display = 'block';
-    if (techCopyWrap) techCopyWrap.style.display = role === 'Tech' ? 'block' : 'none';
-  } else {
-    musicianCtrl.style.display = 'block';
-    singerCtrl.style.display = 'none';
-    if (techCopyWrap) techCopyWrap.style.display = 'none';
-  }
+  const isLyricsOnly = viewerType === 'singer' || viewerType === 'tech';
+  if (musicianCtrl) musicianCtrl.style.display = isLyricsOnly ? 'none' : 'block';
+  if (singerCtrl)   singerCtrl.style.display   = isLyricsOnly ? 'block' : 'none';
+  if (techCopyWrap) techCopyWrap.style.display  = viewerType === 'tech' ? 'block' : 'none';
 }
 
 function copySheetToClipboard() {
@@ -3111,7 +3085,7 @@ function isSectionHeader(line) {
 }
 
 function renderSheetContent(content, targetKey, srcKey) {
-  const showChords = !(role === 'Singer' || role === 'Tech' || lyricsOnlyMode);
+  const showChords = !lyricsOnlyMode;
   const container = document.getElementById('song-sheet-content');
   const lines = content.split('\n');
   let html = '';
@@ -3235,12 +3209,14 @@ function selectKey(key) {
 // LYRICS ONLY TOGGLE
 // ============================================================
 function getLyricsOnlyPref() {
-  if (!currentUser) return false;
-  try { return localStorage.getItem(`rccm_lyricsonly_${'service'}`) === '1'; } catch(e) { return false; }
+  // Singer and Tech are always lyrics-only; admin/musician can toggle
+  if (viewerType === 'singer' || viewerType === 'tech') return true;
+  if (appRole !== 'viewer') return false; // admin always sees chords
+  try { return localStorage.getItem('rccm_lyricsonly_viewer') === '1'; } catch(e) { return false; }
 }
 function saveLyricsOnlyPref(val) {
   if (!currentUser) return;
-  try { localStorage.setItem(`rccm_lyricsonly_${'service'}`, val ? '1' : '0'); } catch(e) {}
+  try { localStorage.setItem('rccm_lyricsonly_viewer', val ? '1' : '0'); } catch(e) {}
 }
 function applyLyricsOnlyUI() {
   const btn = document.getElementById('lyrics-toggle-label');
@@ -4310,10 +4286,8 @@ function renderSetlistsList() {
 async function deleteSetlist(id) {
   if (appRole === 'viewer') return;
   if (!confirm('Delete this setlist?')) return;
-  const role = '';
   const setlist = allSetlists.find(s => s.id === id);
   if (!setlist) return;
-  if (role !== 'Admin' && setlist.createdBy !== 'service') { showAlert('Permission Denied', 'You can only delete your own setlists.', 'mdi:lock'); return; }
   try { await db.collection('setlists').doc(id).delete(); } catch(e) { console.error(e); }
 }
 
@@ -4356,9 +4330,8 @@ function closeSetlistDetail() {
 
 function renderSetlistDetail(setlist) {
   // roles/abilities removed — use appRole
-  const isOwner = setlist.createdBy === 'service';
   const canEdit = appRole !== 'viewer';
-  const isTech = roles.includes('Tech');
+  const isTech = viewerType === 'tech';
   const detail = document.getElementById('setlist-detail-view');
   const songs = currentSetlistSongs.map(sid => allSongs.find(s => s.id === sid)).filter(Boolean);
   detail.innerHTML = `
@@ -4366,13 +4339,7 @@ function renderSetlistDetail(setlist) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div>
           <h2 style="color:var(--lyrics-color);font-size:16px;font-weight:700;margin:0;">${escHtml(setlist.name)}</h2>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-            ${setlist.isCustomGroup
-              ? '<span class="privacy-badge badge-custom">⚡ Custom Group</span>'
-              : setlist.isPrivate
-                ? '<span class="privacy-badge badge-private">🔒 Private</span>'
-                : '<span class="privacy-badge badge-public">🌐 Public</span>'}
-          </div>
+
         </div>
         <div id="setlist-creator-info" style="display:flex;align-items:center;gap:6px;"></div>
       </div>
@@ -4395,40 +4362,12 @@ function renderSetlistDetail(setlist) {
   loadSetlistCreator(setlist.createdBy);
 }
 
-function openCreatorProfile(uid) {
-  // If it's the current user's own profile, open profile view
-  if (uid === 'service') { openProfileView(); return; }
-  // Otherwise open user detail
-  openUserDetail(uid);
-}
+function openCreatorProfile(uid) { /* users removed */ }
 
 async function loadSetlistCreator(uid) {
-  if (!uid) return;
-  try {
-    const snap = await db.collection('users').doc(uid).get();
-    if (!snap.exists) return;
-    const d = snap.data();
-    const myRole = currentUserProfile?.role || '';
-    const myRoles = Array.isArray(currentUserProfile?.roles) ? currentUserProfile.roles : [myRole];
-    const isOwner = uid === 'service';
-    const canManage = isOwner || myRoles.includes('Admin');
-    const setlist = allSetlists.find(s => s.id === currentSetlistId);
-    const isCustomGroup = false;
-    document.getElementById('setlist-creator-info').innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;">
-        <img src="${escHtml(d.photoURL||'')}" title="${escHtml(d.displayName||'')}"
-          style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--surface-2);cursor:pointer;border:2px solid var(--border-subtle);transition:border-color 0.2s;"
-          onclick="openCreatorProfile('${uid}')"
-          onmouseover="this.style.borderColor='var(--accent)'"
-          onmouseout="this.style.borderColor='var(--border-subtle)'" />
-        ${false ? `<button onclick="openManageMembersModal()" title="Manage Members"
-          style="background:var(--surface-2);border:1px solid var(--border-subtle);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;"
-          onmouseover="this.style.background='#3a3a3a'" onmouseout="this.style.background='var(--surface-2)'">
-          <iconify-icon icon="mdi:account-multiple-plus" style="font-size:16px;color:var(--accent);"></iconify-icon>
-        </button>` : ''}
-      </div>
-    `;
-  } catch(e) {}
+  // No users collection — clear creator info area
+  const el = document.getElementById('setlist-creator-info');
+  if (el) el.innerHTML = '';
 }
 
 // ============================================================
