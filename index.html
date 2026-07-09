@@ -2858,7 +2858,15 @@ function initSongSwipe() {
 }
 
 async function deleteSong(id) {
-  try { await db.collection('songs').doc(id).delete(); } catch(e) { console.error(e); }
+  if (appRole === 'viewer') return;
+  if (!await ensureServiceAuth()) return;
+  try {
+    await db.collection('songs').doc(id).delete();
+    showAlert('Deleted', 'Song removed.', 'mdi:check-circle');
+  } catch(e) {
+    console.error('deleteSong:', e);
+    showAlert('Error', 'Could not delete song: ' + (e.code || e.message), 'mdi:alert-circle');
+  }
 }
 
 // ============================================================
@@ -3851,7 +3859,7 @@ function _updateSaveSongBtn() {
 
 function openCreateSongModal() {
   // roles/abilities removed — use appRole
-  const canAdd = roles.some(r => ['Admin','Sub-Admin','Lead'].includes(r)) ||
+  const canAdd = appRole !== 'viewer' ||
     appRole !== 'viewer';
   if (!canAdd) { showAlert('Permission Denied', 'You do not have permission to add songs.', 'mdi:lock'); return; }
   document.getElementById('new-song-title').value = '';
@@ -4288,7 +4296,15 @@ async function deleteSetlist(id) {
   if (!confirm('Delete this setlist?')) return;
   const setlist = allSetlists.find(s => s.id === id);
   if (!setlist) return;
-  try { await db.collection('setlists').doc(id).delete(); } catch(e) { console.error(e); }
+  if (!await ensureServiceAuth()) return;
+  try {
+    await db.collection('setlists').doc(id).delete();
+    closeSetlistDetail();
+    showAlert('Deleted', 'Setlist removed.', 'mdi:check-circle');
+  } catch(e) {
+    console.error('deleteSetlist:', e);
+    showAlert('Error', 'Could not delete setlist: ' + (e.code || e.message), 'mdi:alert-circle');
+  }
 }
 
 function openSetlistDetail(setlistId) {
@@ -4514,6 +4530,7 @@ function copySetlistSong(songId) {
 }
 
 async function removeSongFromSetlist(songId) {
+  if (!await ensureServiceAuth()) return;
   currentSetlistSongs = currentSetlistSongs.filter(id => id !== songId);
   try {
     await db.collection('setlists').doc(currentSetlistId).update({ songs: currentSetlistSongs });
@@ -4575,6 +4592,7 @@ async function addSongToSetlist(songId) {
     showAlert('Limit Reached', `This setlist can hold a maximum of ${limit} songs.`, 'mdi:alert');
     return;
   }
+  if (!await ensureServiceAuth()) return;
   currentSetlistSongs.push(songId);
   try {
     await db.collection('setlists').doc(currentSetlistId).update({ songs: currentSetlistSongs });
@@ -4634,7 +4652,7 @@ function renderCustomGroupUsers(query) {
   const container = document.getElementById('custom-group-users-list');
   const filtered = allUsers.filter(u =>
     u.uid !== 'service' &&
-    u.role !== 'Admin' &&
+    true &&
     (u.displayName||'').toLowerCase().includes(query.toLowerCase())
   );
   container.innerHTML = filtered.map(u => {
@@ -4693,6 +4711,7 @@ async function saveSetlist() {
     }
   }
 
+  if (!await ensureServiceAuth()) return;
   const data = {
     name, isPrivate: false, isCustomGroup: false, songs: [],
     createdBy: 'service',
@@ -5315,6 +5334,25 @@ async function saveAutoscrollTutorialPref(val) {
 // ADMIN SETTINGS
 // ============================================================
 // ============================================================
+// ENSURE SERVICE ACCOUNT IS SIGNED IN BEFORE ANY WRITE
+// ============================================================
+async function ensureServiceAuth() {
+  if (appRole === 'viewer') return false;
+  const user = firebase.auth().currentUser;
+  if (user && !user.isAnonymous && user.email === SERVICE_EMAIL) return true;
+  try {
+    if (user) await firebase.auth().signOut();
+    const cred = await firebase.auth().signInWithEmailAndPassword(SERVICE_EMAIL, SERVICE_PASS);
+    currentUser = cred.user;
+    return true;
+  } catch(e) {
+    console.error('ensureServiceAuth failed:', e);
+    showAlert('Auth Error', 'Could not authenticate for write access. Please re-enter your PIN.', 'mdi:lock-alert');
+    return false;
+  }
+}
+
+// ============================================================
 // ROLE PICKER + 3-TAP ADMIN LOGIN
 // ============================================================
 function showRolePicker() {
@@ -5437,6 +5475,7 @@ function updateRoleBadge() {
 
 async function saveSubAdminPin() {
   if (appRole !== 'admin') { showAlert('Access Denied','Only Admin can change the Sub-Admin PIN.','mdi:lock'); return; }
+  if (!await ensureServiceAuth()) return;
   const input = document.getElementById('subadmin-pin-input');
   const pin   = (input?.value || '').trim();
   if (!/^\d{4}$/.test(pin)) { showAlert('Invalid PIN','PIN must be exactly 4 digits.','mdi:alert-circle'); return; }
@@ -5589,7 +5628,8 @@ function dzUpdateDeleteBtn(type) {
 }
 
 async function dzDeleteSelected(type) {
-  if (appRole !== 'admin') return;
+  if (appRole === 'viewer') return;
+  if (!await ensureServiceAuth()) return;
   const selected = type === 'setlists' ? _dzSelectedSetlists : _dzSelectedSongs;
   const n = selected.size;
   if (!n) return;
@@ -5662,7 +5702,8 @@ function handleImportFileSelect(input) {
 
 async function confirmImportSongs() {
   if (!_importSongsPending.length) return;
-  if (role !== 'Admin') { showAlert('Access Denied', 'Only admins can import songs.', 'mdi:lock'); return; }
+  if (appRole === 'viewer') { showAlert('Access Denied', 'Only Admin or Sub-Admin can import songs.', 'mdi:lock'); return; }
+  if (!await ensureServiceAuth()) return;
   const btn = document.getElementById('import-songs-confirm-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
   try {
@@ -5738,7 +5779,8 @@ function downloadSampleSongsFile() {
 }
 
 async function saveAdminSettings() {
-  if (role !== 'Admin') return;
+  if (appRole !== 'admin') return;
+  if (!await ensureServiceAuth()) return;
   const name = document.getElementById('admin-app-name').value.trim();
   showSyncToast();
   try {
@@ -5768,9 +5810,11 @@ function setListLayout(mode, skipSave) {
     lineBtn.style.color = mode === 'line' ? 'var(--accent)' : 'var(--text-secondary)';
   }
   // Persist to Firestore (admin only, unless called internally during load)
-  if (!skipSave && appRole === 'admin') {
-    db.collection('settings').doc('global').set({ listLayout: mode }, { merge: true })
-      .catch(e => console.error('setListLayout save:', e));
+  if (!skipSave && appRole !== 'viewer') {
+    ensureServiceAuth().then(ok => {
+      if (ok) db.collection('settings').doc('global').set({ listLayout: mode }, { merge: true })
+        .catch(e => console.error('setListLayout save:', e));
+    });
   }
 }
 
@@ -5792,7 +5836,8 @@ function toggleAdminSection(id) {
 }
 
 async function saveGlobalSongLimit() {
-  if (role !== 'Admin') return;
+  if (appRole !== 'admin') return;
+  if (!await ensureServiceAuth()) return;
   const val = parseInt(document.getElementById('admin-song-limit')?.value) || 4;
   globalSongLimit = val;
   showSyncToast();
@@ -5836,6 +5881,7 @@ async function saveLogoChange() {
   if (!url) return;
   document.getElementById('admin-logo-preview').src = url;
   showSyncToast();
+  if (!await ensureServiceAuth()) return;
   try {
     await db.collection('settings').doc('global').set({ logoURL: url }, { merge: true });
     hideSyncToast();
@@ -6205,6 +6251,7 @@ function saveCustomTheme() {
 
 async function saveThemeToDb(theme) {
   if (appRole !== 'admin') return;
+  if (!await ensureServiceAuth()) return;
   try {
     await db.collection('settings').doc('global').set({ theme }, { merge: true });
   } catch(e) { console.error(e); }
@@ -6247,6 +6294,7 @@ function setMetaFont(val) {
 
 async function saveTypographyToDb(typo) {
   if (appRole !== 'admin') return;
+  if (!await ensureServiceAuth()) return;
   try {
     await db.collection('settings').doc('global').set({ typography: typo }, { merge: true });
   } catch(e) { console.error(e); }
@@ -6339,7 +6387,7 @@ async function runTTLCleanup() {
 }
 
 async function saveSetlistTTL() {
-  if (role !== 'Admin') return;
+  if (appRole !== 'admin') return;
   const val = parseInt(document.getElementById('admin-setlist-ttl')?.value) || 7;
   globalSetlistTTLDays = val;
   showSyncToast();
@@ -6357,7 +6405,7 @@ let _dasCode = null;
 let _dasCodeExpiry = null;
 
 function initiateDeleteAllSetlists() {
-  if (role !== 'Admin') return;
+  if (appRole !== 'admin') return;
   // Reset modal to step 1
   document.getElementById('das-step-1').style.display = 'block';
   document.getElementById('das-step-2').style.display = 'none';
