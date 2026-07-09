@@ -190,6 +190,13 @@
     .modal-sheet.key-modal { max-height: 55vh; min-height: unset; }
     .modal-handle { width: 48px; height: 5px; background: var(--border-subtle); border-radius: var(--radius-pill); margin: 0 auto 14px; cursor: ns-resize; touch-action: none; padding: 10px 20px; box-sizing: content-box; margin-top: -10px; background-clip: content-box; }
     .modal-handle:hover { background-color: var(--accent); background-clip: content-box; opacity: 0.7; }
+    /* Search pill expands when back button is hidden */
+    #header-search-pill.expanded {
+      width: calc(100vw - 28px - 56px) !important; /* full width minus right margin minus filter btn */
+      transition: width 0.25s var(--ease-smooth);
+    }
+    /* In-tab search rows always full width */
+    .search-row { display:flex;align-items:center;gap:8px;margin-bottom:12px; }
     /* Resizable modal sheet */
     .modal-sheet.resizable { transition: none; }
     .role-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; }
@@ -933,8 +940,8 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
     </div><!-- /tab-setlists -->
 
-    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div id="tab-admin" class="tab-panel" style="padding:8px var(--view-px);padding-top:calc(8px + env(safe-area-inset-top,0px));">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:-44px;"><!-- pull up past floating header space -->
         <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;">Admin Panel</h1>
         <button onclick="exitAdminMode()" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:#e05555;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">
           Exit Admin
@@ -1330,44 +1337,46 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
 <!-- DANGER ZONE MODAL -->
 <div id="admin-modal-dangerzone" class="modal-overlay" style="display:none;">
-  <div class="modal-sheet" style="max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="modal-sheet" style="height:72vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-handle" style="flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0;">
       <h3 style="color:#e05555;font-size:16px;font-weight:700;margin:0;">Danger Zone</h3>
       <button onclick="closeAdminModal('dangerzone')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;">✕</button>
     </div>
-    <div style="overflow-y:auto;">
-      <div id="admin-sec-dangerzone">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;">
+      <div id="admin-sec-dangerzone" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div style="display:flex;gap:6px;margin-bottom:12px;">
           <button id="dz-tab-setlists" onclick="switchDangerTab('setlists')" style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid var(--accent);background:var(--accent-glow);color:var(--accent);transition:all 0.15s;">Setlists</button>
           <button id="dz-tab-songs" onclick="switchDangerTab('songs')" style="flex:1;padding:8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid var(--border-color);background:transparent;color:var(--text-secondary);transition:all 0.15s;">Songs</button>
         </div>
-        <div id="dz-panel-setlists">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <!-- SETLISTS PANEL -->
+        <div id="dz-panel-setlists" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
             <span style="color:var(--text-muted);font-size:12px;" id="dz-setlists-count">0 setlists</span>
             <div style="display:flex;gap:6px;">
               <button onclick="dzSelectAll('setlists')" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent);border-radius:7px;padding:4px 10px;cursor:pointer;">All</button>
               <button onclick="dzDeselectAll('setlists')" style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-color);border-radius:7px;padding:4px 10px;cursor:pointer;">None</button>
             </div>
           </div>
-          <div id="dz-setlists-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
-          <div id="dz-setlists-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No setlists found.</div>
-          <button onclick="dzDeleteSelected('setlists')" id="dz-delete-setlists-btn" disabled style="width:100%;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
+          <div id="dz-setlists-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;"></div>
+          <div id="dz-setlists-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;flex-shrink:0;">No setlists found.</div>
+          <button onclick="dzDeleteSelected('setlists')" id="dz-delete-setlists-btn" disabled style="flex-shrink:0;width:100%;margin-top:10px;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
             <iconify-icon icon="mdi:delete-sweep" style="font-size:18px;"></iconify-icon>
             <span id="dz-delete-setlists-label">Delete Selected Setlists</span>
           </button>
         </div>
-        <div id="dz-panel-songs" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <!-- SONGS PANEL -->
+        <div id="dz-panel-songs" style="display:none;flex-direction:column;flex:1;min-height:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
             <span style="color:var(--text-muted);font-size:12px;" id="dz-songs-count">0 songs</span>
             <div style="display:flex;gap:6px;">
               <button onclick="dzSelectAll('songs')" style="font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent);border-radius:7px;padding:4px 10px;cursor:pointer;">All</button>
               <button onclick="dzDeselectAll('songs')" style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border-color);border-radius:7px;padding:4px 10px;cursor:pointer;">None</button>
             </div>
           </div>
-          <div id="dz-songs-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;"></div>
-          <div id="dz-songs-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No songs found.</div>
-          <button onclick="dzDeleteSelected('songs')" id="dz-delete-songs-btn" disabled style="width:100%;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
+          <div id="dz-songs-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;"></div>
+          <div id="dz-songs-empty" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;flex-shrink:0;">No songs found.</div>
+          <button onclick="dzDeleteSelected('songs')" id="dz-delete-songs-btn" disabled style="flex-shrink:0;width:100%;margin-top:10px;background:rgba(220,50,50,0.12);border:1.5px solid rgba(220,50,50,0.4);color:#e05555;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;opacity:0.5;">
             <iconify-icon icon="mdi:delete-sweep" style="font-size:18px;"></iconify-icon>
             <span id="dz-delete-songs-label">Delete Selected Songs</span>
           </button>
@@ -2436,6 +2445,9 @@ function updateHomeBtn(show) {
               || activeTab === 'admin';
   const shouldShow = show && !atRoot;
   if (backBtn) backBtn.style.display = shouldShow ? 'flex' : 'none';
+  // Expand search pill to fill space when back button is hidden
+  const pill = document.getElementById('header-search-pill');
+  if (pill) pill.classList.toggle('expanded', !shouldShow && activeTab !== 'admin');
   // Hide search/filter when drilling into detail or on admin tab
   const actions = document.getElementById('header-actions');
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
@@ -3193,8 +3205,10 @@ function openKeyModal() {
   container.innerHTML = CHROMATIC_SCALE.map(k => `
     <button class="key-btn ${k === localKey ? 'active' : ''}" onclick="selectKey('${k}')">${k}</button>
   `).join('');
-  document.getElementById('key-modal').style.display = 'flex';
-  _animateModalIn(document.getElementById('key-modal'));
+  const _km = document.getElementById('key-modal');
+  _km.style.display = 'flex';
+  _animateModalIn(_km);
+  _attachSwipeToClose(_km, () => closeModal(_km));
   pushState();
 }
 function closeKeyModal() { _animateModalOut(document.getElementById('key-modal')); }
@@ -3775,6 +3789,56 @@ function getSortedSongs() {
 }
 
 // ── Modal animation helper: replays entry animation each time a modal is shown ──
+// ============================================================
+// BOTTOM SHEET SWIPE TO CLOSE
+// ============================================================
+function _attachSwipeToClose(overlayEl, closeFn) {
+  const sheet = overlayEl.querySelector('.modal-sheet');
+  const handle = overlayEl.querySelector('.modal-handle');
+  if (!sheet || !handle) return;
+  let startY = 0, startTime = 0, isDragging = false, currentY = 0;
+  function onStart(e) {
+    // Only start drag from the handle area
+    const touch = e.touches ? e.touches[0] : e;
+    startY    = touch.clientY;
+    startTime = Date.now();
+    currentY  = 0;
+    isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e) {
+    if (!isDragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const dy = touch.clientY - startY;
+    if (dy < 0) { sheet.style.transform = ''; return; } // don't allow pulling up
+    currentY = dy;
+    sheet.style.transform = `translateY(${dy}px)`;
+    overlayEl.style.background = `rgba(0,0,0,${Math.max(0, 0.6 - dy / 400)})`;
+    if (e.cancelable) e.preventDefault();
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    const elapsed  = Date.now() - startTime;
+    const velocity = currentY / elapsed; // px/ms
+    sheet.style.transition = '';
+    overlayEl.style.background = '';
+    // Close if dragged far enough OR fast enough
+    if (currentY > 120 || velocity > 0.5) {
+      sheet.style.transform = `translateY(100%)`;
+      setTimeout(() => { sheet.style.transform = ''; closeFn(); }, 200);
+    } else {
+      sheet.style.transform = '';
+    }
+  }
+  handle.addEventListener('touchstart',  onStart, { passive: true });
+  handle.addEventListener('touchmove',   onMove,  { passive: false });
+  handle.addEventListener('touchend',    onEnd);
+  handle.addEventListener('mousedown',   onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onEnd);
+}
+
 function _animateModalIn(modalOverlayEl) {
   if (!modalOverlayEl) return;
   const sheet = modalOverlayEl.querySelector('.modal-sheet');
@@ -3891,6 +3955,7 @@ function openCreateSongModal() {
   if (saveBtn) saveBtn.textContent = 'Save Song';
   modal.style.display = 'flex';
   _animateModalIn(modal);
+  _attachSwipeToClose(modal, closeCreateSongModal);
   setIntakeMode('text');
   pushState();
   _updateSaveSongBtn();
@@ -4558,7 +4623,9 @@ async function removeSongFromSetlist(songId) {
 function openSongSelectorModal() {
   document.getElementById('song-selector-search').value = '';
   renderSongSelectorList('');
-  document.getElementById('song-selector-modal').style.display = 'flex';
+  const _ssm2 = document.getElementById('song-selector-modal');
+  _ssm2.style.display = 'flex';
+  _attachSwipeToClose(_ssm2, closeSongSelectorModal);
   pushState();
 }
 function closeSongSelectorModal() { _animateModalOut(document.getElementById('song-selector-modal')); }
@@ -4632,8 +4699,10 @@ function openCreateSetlistModal() {
   if (cgSection) cgSection.style.display = 'none';
   const spacer = document.getElementById('setlist-spacer');
   if (spacer) spacer.style.display = 'none';
-  document.getElementById('create-setlist-modal').style.display = 'flex';
-  _animateModalIn(document.getElementById('create-setlist-modal'));
+  const _cslm = document.getElementById('create-setlist-modal');
+  _cslm.style.display = 'flex';
+  _animateModalIn(_cslm);
+  _attachSwipeToClose(_cslm, closeCreateSetlistModal);
   pushState();
 }
 function closeCreateSetlistModal() { _animateModalOut(document.getElementById('create-setlist-modal')); }
@@ -5541,6 +5610,7 @@ function openAdminModal(key) {
   if (!el) return;
   el.style.display = 'flex';
   _animateModalIn(el);
+  _attachSwipeToClose(el, () => closeAdminModal(key));
   if (key === 'dangerzone') dzPopulate();
   if (key === 'admin') { const pinBtn = document.getElementById('subadmin-pin-btn'); if (pinBtn) pinBtn.style.display = appRole === 'admin' ? 'flex' : 'none'; }
 }
@@ -5558,8 +5628,8 @@ let _dzSelectedSongs    = new Set();
 
 function switchDangerTab(tab) {
   const isSetlists = tab === 'setlists';
-  document.getElementById('dz-panel-setlists').style.display = isSetlists ? 'block' : 'none';
-  document.getElementById('dz-panel-songs').style.display    = isSetlists ? 'none'  : 'block';
+  document.getElementById('dz-panel-setlists').style.display = isSetlists ? 'flex' : 'none';
+  document.getElementById('dz-panel-songs').style.display    = isSetlists ? 'none'  : 'flex';
   const sBtn = document.getElementById('dz-tab-setlists');
   const gBtn = document.getElementById('dz-tab-songs');
   sBtn.style.border     = isSetlists ? '2px solid var(--accent)' : '2px solid var(--border-color)';
@@ -5602,12 +5672,11 @@ function dzRenderList(type) {
       ? ((item.songs ? item.songs.length : 0) + ' songs')
       : (item.artist || '');
     const chk  = selected.has(id);
-    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;background:${chk ? 'rgba(220,50,50,0.08)' : 'var(--surface-1)'};border:1px solid ${chk ? 'rgba(220,50,50,0.35)' : 'var(--border-color)'};cursor:pointer;transition:background 0.12s,border-color 0.12s;">
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:${chk ? 'rgba(220,50,50,0.08)' : 'transparent'};border:1px solid ${chk ? 'rgba(220,50,50,0.35)' : 'transparent'};cursor:pointer;transition:background 0.12s,border-color 0.12s;">
       <input type="checkbox" ${chk ? 'checked' : ''} onchange="dzToggle('${type}','${id}',this.checked)"
         style="width:16px;height:16px;accent-color:#e05555;flex-shrink:0;" />
       <div style="flex:1;min-width:0;">
-        <div style="color:var(--lyrics-color);font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(name)}</div>
-        ${sub ? `<div style="color:var(--text-muted);font-size:11px;margin-top:1px;">${escHtml(sub)}</div>` : ''}
+        <div style="color:var(--lyrics-color);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(name)}${sub ? ` <span style="color:var(--text-muted);font-weight:400;">· ${escHtml(sub)}</span>` : ''}</div>
       </div>
     </label>`;
   }).join('');
