@@ -197,6 +197,7 @@
     }
     /* In-tab search rows always full width */
     .search-row { display:flex;align-items:center;gap:8px;margin-bottom:12px; }
+    .search-row .search-input { flex:1;min-width:0; }
     /* Resizable modal sheet */
     .modal-sheet.resizable { transition: none; }
     .role-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; }
@@ -817,13 +818,8 @@ button:active::after { background: rgba(255,255,255,0.12); }
   <div id="main-content" style="flex:1;height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));padding-top:calc(64px + env(safe-area-inset-top,0px));-webkit-overflow-scrolling:touch;opacity:0;">
 
 <div id="tab-songs" class="tab-panel active" style="padding:8px var(--view-px);">
-    <!-- Tab header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px;">
-      <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;letter-spacing:-0.02em;">Songs</h1>
-    </div>
-    <div id="songs-list-view">
+    <div id="songs-list-view" style="margin-top:-48px;padding-top:4px;">
       <div class="search-row">
-        <iconify-icon icon="mdi:magnify" class="search-icon"></iconify-icon>
         <input type="text" class="search-input" placeholder="Search songs..." id="song-search-input" oninput="filterSongs()" style="flex:1;" />
         <button id="song-filter-btn" class="filter-btn" onclick="toggleSongFilterMenu()">
           <iconify-icon icon="mdi:filter" style="font-size:16px;"></iconify-icon>
@@ -907,13 +903,8 @@ button:active::after { background: rgba(255,255,255,0.12); }
     </div>
 
 <div id="tab-setlists" class="tab-panel" style="padding:12px var(--view-px);">
-      <!-- Tab header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px;">
-        <h1 style="color:var(--lyrics-color);font-size:22px;font-weight:700;margin:0;letter-spacing:-0.02em;">Setlists</h1>
-      </div>
-      <div id="setlists-list-view">
+      <div id="setlists-list-view" style="margin-top:-48px;padding-top:4px;">
       <div class="search-row">
-        <iconify-icon icon="mdi:magnify" class="search-icon"></iconify-icon>
         <input type="text" class="search-input" placeholder="Search setlists..." id="setlist-search-input" oninput="filterSetlists()" style="flex:1;" />
         <button id="setlist-filter-btn" class="filter-btn" onclick="toggleSetlistFilterMenu()">
           <iconify-icon icon="mdi:filter" style="font-size:16px;"></iconify-icon>
@@ -2362,9 +2353,9 @@ function switchTab(tab) {
     panel.classList.add('active');
   }
 
-  // Hide search/filter on admin tab
+  // Floating header-actions only shown inside setlist detail or song sheet
   const headerActions = document.getElementById('header-actions');
-  if (headerActions) headerActions.style.display = tab === 'admin' ? 'none' : 'flex';
+  if (headerActions) headerActions.style.display = 'none'; // updateHomeBtn handles this
 
   updateFAB();
   updateHomeBtn(false);
@@ -2448,12 +2439,15 @@ function updateHomeBtn(show) {
   // Expand search pill to fill space when back button is hidden
   const pill = document.getElementById('header-search-pill');
   if (pill) pill.classList.toggle('expanded', !shouldShow && activeTab !== 'admin');
-  // Hide search/filter when drilling into detail or on admin tab
+  // Show floating search/filter ONLY inside setlist detail or song sheet
   const actions = document.getElementById('header-actions');
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
+  const inSetlistDetail = !!currentSetlistId;
   if (actions) {
-    const noSearchNeeded = activeTab === 'admin' || songSheetOpen;
-    actions.style.display = noSearchNeeded ? 'none' : 'flex';
+    // Floating header only needed when inside a setlist (viewing songs in it)
+    const showFloating = (inSetlistDetail && !songSheetOpen) || songSheetOpen;
+    const hideOnAdmin  = activeTab === 'admin';
+    actions.style.display = (showFloating && !hideOnAdmin) ? 'flex' : 'none';
   }
 }
 
