@@ -190,11 +190,7 @@
     .modal-sheet.key-modal { max-height: 55vh; min-height: unset; }
     .modal-handle { width: 48px; height: 5px; background: var(--border-subtle); border-radius: var(--radius-pill); margin: 0 auto 14px; cursor: ns-resize; touch-action: none; padding: 10px 20px; box-sizing: content-box; margin-top: -10px; background-clip: content-box; }
     .modal-handle:hover { background-color: var(--accent); background-clip: content-box; opacity: 0.7; }
-    /* Search pill expands when back button is hidden */
-    #header-search-pill.expanded {
-      width: calc(100vw - 28px - 56px) !important; /* full width minus right margin minus filter btn */
-      transition: width 0.25s var(--ease-smooth);
-    }
+    /* Search pill is always expanded — no toggle needed */
     /* In-tab search rows always full width */
     .search-row { display:flex;align-items:center;gap:8px;margin-bottom:12px; }
     .search-row .search-input { flex:1;min-width:0; }
@@ -797,14 +793,13 @@ button:active::after { background: rgba(255,255,255,0.12); }
 
   <!-- FLOATING SEARCH + FILTER (top-right, per-tab) -->
   <div id="header-actions" style="position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:400;display:flex;align-items:center;gap:8px;transition:opacity 0.22s var(--ease-smooth), transform 0.22s var(--ease-smooth);">
-    <!-- Expandable search pill -->
-    <div id="header-search-pill" style="display:flex;align-items:center;background:var(--surface-1);border:1px solid var(--border-color);border-radius:23px;box-shadow:0 2px 10px rgba(60,30,30,0.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;width:46px;height:46px;">
-      <button id="header-search-btn" onclick="toggleHeaderSearch()" style="width:46px;height:46px;min-width:46px;background:transparent;border:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.15s;">
-        <iconify-icon icon="mdi:magnify" style="font-size:21px;"></iconify-icon>
+    <!-- Always-open search pill (no X, no collapse) -->
+    <div id="header-search-pill" style="display:flex;align-items:center;background:var(--surface-1);border:1px solid var(--border-color);border-radius:23px;box-shadow:0 2px 10px rgba(60,30,30,0.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;height:46px;width:200px;">
+      <button id="header-search-btn" onclick="document.getElementById('header-search-input').focus()" style="width:40px;min-width:40px;height:46px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <iconify-icon icon="mdi:magnify" style="font-size:19px;"></iconify-icon>
       </button>
       <input id="header-search-input" type="text" placeholder="Search..." oninput="onHeaderSearchInput()"
-        style="width:0;opacity:0;border:none;background:transparent;color:var(--lyrics-color);font-size:14px;font-family:var(--app-font-family);outline:none;padding:0;transition:width 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s;pointer-events:none;" />
-      <button id="header-search-clear" onclick="closeHeaderSearch()" style="display:none;width:32px;height:32px;min-width:32px;margin:7px;background:var(--surface-2);border:none;border-radius:50%;color:var(--text-muted);cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;transition:background 0.15s;">✕</button>
+        style="flex:1;min-width:0;border:none;background:transparent;color:var(--lyrics-color);font-size:14px;font-family:var(--app-font-family);outline:none;padding:0 8px 0 0;" />
     </div>
     <!-- Filter button -->
     <button id="header-filter-btn" onclick="openHeaderFilter()" style="width:46px;height:46px;border-radius:50%;background:var(--surface-1);border:1px solid var(--border-color);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(60,30,30,0.18);position:relative;transition:color 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
@@ -2246,34 +2241,13 @@ function closeSidebar() {
 // ============================================================
 // HEADER SEARCH (animates inline into header)
 // ============================================================
-let _searchExpanded = false;
-function toggleHeaderSearch() {
-  if (_searchExpanded) closeHeaderSearch();
-  else openHeaderSearch();
-}
-function openHeaderSearch() {
-  _searchExpanded = true;
-  const pill = document.getElementById('header-search-pill');
-  const input = document.getElementById('header-search-input');
-  const clearBtn = document.getElementById('header-search-clear');
-  const searchBtn = document.getElementById('header-search-btn');
-  if (!pill) return;
-  pill.style.width = '220px';
-  setTimeout(() => {
-    if (input) { input.style.width = '120px'; input.style.opacity = '1'; input.style.pointerEvents = 'auto'; input.focus(); }
-    if (clearBtn) clearBtn.style.display = 'flex';
-  }, 50);
-}
+let _searchExpanded = true; // always expanded
+function toggleHeaderSearch() { document.getElementById('header-search-input')?.focus(); }
+function openHeaderSearch()   { document.getElementById('header-search-input')?.focus(); }
 function closeHeaderSearch() {
-  _searchExpanded = false;
-  const pill = document.getElementById('header-search-pill');
+  // Clear the search value but keep pill open
   const input = document.getElementById('header-search-input');
-  const clearBtn = document.getElementById('header-search-clear');
-  const searchBtn = document.getElementById('header-search-btn');
-  if (!pill) return;
-  pill.style.width = '46px';
-  if (input) { input.style.width = '0'; input.style.opacity = '0'; input.style.pointerEvents = 'none'; input.value = ''; }
-  if (clearBtn) clearBtn.style.display = 'none';
+  if (input) { input.value = ''; }
   onHeaderSearchInput();
 }
 // Routes header search input to the active tab's underlying search field
@@ -2359,7 +2333,9 @@ function switchTab(tab) {
 
   updateFAB();
   updateHomeBtn(false);
-  closeHeaderSearch();
+  // Clear search when switching tabs (keep pill open)
+  const _hsi = document.getElementById('header-search-input');
+  if (_hsi) { _hsi.value = ''; onHeaderSearchInput(); }
   syncHeaderFilterDot();
   buildBottomNav();
 }
@@ -2436,18 +2412,13 @@ function updateHomeBtn(show) {
               || activeTab === 'admin';
   const shouldShow = show && !atRoot;
   if (backBtn) backBtn.style.display = shouldShow ? 'flex' : 'none';
-  // Expand search pill to fill space when back button is hidden
-  const pill = document.getElementById('header-search-pill');
-  if (pill) pill.classList.toggle('expanded', !shouldShow && activeTab !== 'admin');
-  // Show floating search/filter ONLY inside setlist detail or song sheet
+
+  // Hide floating search/filter only on admin tab or inside a song sheet
   const actions = document.getElementById('header-actions');
   const songSheetOpen = document.getElementById('song-sheet-view')?.style.display === 'block';
-  const inSetlistDetail = !!currentSetlistId;
   if (actions) {
-    // Floating header only needed when inside a setlist (viewing songs in it)
-    const showFloating = (inSetlistDetail && !songSheetOpen) || songSheetOpen;
-    const hideOnAdmin  = activeTab === 'admin';
-    actions.style.display = (showFloating && !hideOnAdmin) ? 'flex' : 'none';
+    const hide = activeTab === 'admin' || songSheetOpen;
+    actions.style.display = hide ? 'none' : 'flex';
   }
 }
 
