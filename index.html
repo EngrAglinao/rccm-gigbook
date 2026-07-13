@@ -395,7 +395,8 @@
     .hex-input { width: 100%; max-width: 90px; background: var(--surface-2); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 3px 6px; color: var(--text-secondary); font-size: 11px; font-family: monospace; margin-top: 2px; text-transform: lowercase; transition: border-color 0.15s; }
     .hex-input:focus { border-color: var(--accent); outline: none; }
     .hex-input.invalid { border-color: #e74c3c; }
-    .tutorial-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    /* TUTORIAL: change display to flex to re-enable tutorial overlays */
+    .tutorial-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: none !important; align-items: center; justify-content: center; padding: 20px; }
     .key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .key-btn { padding: 10px 4px; border-radius: 10px; text-align: center; cursor: pointer; background: var(--surface-2); border: 2px solid transparent; color: var(--lyrics-color); font-weight: 600; font-size: 15px; transition: all 0.15s var(--ease-smooth); }
     .key-btn.active { border-color: var(--accent); color: var(--accent-soft); background: var(--accent-glow); }
@@ -450,12 +451,12 @@
     /* Uniform filter button */
     .filter-btn {
       display: flex; align-items: center; gap: 4px; flex-shrink: 0;
-      background: var(--surface-2); border: 1px solid var(--border-subtle);
+      background: var(--surface-2); border: none;
       border-radius: 12px; padding: 0 10px;
       height: var(--search-row-height);
       color: var(--text-secondary); cursor: pointer; font-size: 13px;
       white-space: nowrap;
-      transition: border-color 0.22s var(--ease-smooth), color 0.22s var(--ease-smooth), background 0.22s var(--ease-smooth), box-shadow 0.22s var(--ease-smooth);
+      transition: color 0.22s var(--ease-smooth), background 0.22s var(--ease-smooth), box-shadow 0.22s var(--ease-smooth);
       position: relative;
     }
     .filter-btn.has-active-filter {
@@ -621,6 +622,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
     }
     /* Uniform list gaps */
     .songs-list-wrap, .setlists-list-wrap, .users-list-wrap {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
       display: flex; flex-direction: column; gap: var(--list-gap);
     }
     .filter-chip { padding: 4px 11px; border-radius: var(--radius-pill); font-size: 12px; border: 1px solid var(--border-color); background: var(--surface-1); color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all 0.2s var(--ease-smooth); }
@@ -789,9 +791,9 @@ button:active::after { background: rgba(255,255,255,0.12); }
   </button>
 
   <!-- FLOATING SEARCH + FILTER (top-right, per-tab) -->
-  <div id="header-actions" style="position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:400;display:flex;align-items:center;gap:8px;transition:opacity 0.22s var(--ease-smooth), transform 0.22s var(--ease-smooth);">
+  <div id="header-actions" style="position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;left:14px;z-index:400;display:flex;align-items:center;gap:8px;transition:opacity 0.22s var(--ease-smooth), transform 0.22s var(--ease-smooth);pointer-events:none;">
     <!-- Always-open search pill -->
-    <div id="header-search-pill" style="display:flex;align-items:center;background:var(--surface-1);border:1px solid var(--border-color);border-radius:23px;box-shadow:0 2px 10px rgba(60,30,30,0.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;height:46px;min-width:46px;flex:1;max-width:220px;">
+    <div id="header-search-pill" style="display:flex;align-items:center;background:var(--surface-1);border:1px solid var(--border-color);border-radius:23px;box-shadow:0 2px 10px rgba(60,30,30,0.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;height:46px;min-width:46px;flex:1;max-width:220px;transition:max-width 0.25s ease;pointer-events:auto;">
       <button id="header-search-btn" onclick="document.getElementById('header-search-input').focus()" style="width:42px;min-width:42px;height:46px;background:transparent;border:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <iconify-icon icon="mdi:magnify" style="font-size:20px;"></iconify-icon>
       </button>
@@ -799,7 +801,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
         style="flex:1;min-width:0;border:none;background:transparent;color:var(--lyrics-color);font-size:14px;font-family:var(--app-font-family);outline:none;padding:0 6px 0 0;" />
     </div>
     <!-- Filter button -->
-    <button id="header-filter-btn" onclick="openHeaderFilter()" style="width:46px;min-width:46px;height:46px;border-radius:23px;background:var(--surface-1);border:1px solid var(--border-color);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(60,30,30,0.18);position:relative;transition:color 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
+    <button id="header-filter-btn" onclick="openHeaderFilter()" style="width:46px;min-width:46px;height:46px;border-radius:23px;background:var(--surface-1);border:none;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(60,30,30,0.18);position:relative;transition:color 0.2s var(--ease-smooth), background 0.2s var(--ease-smooth);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto;">
       <iconify-icon icon="mdi:tune-variant" style="font-size:20px;"></iconify-icon>
     </button>
   </div>
@@ -869,16 +871,7 @@ button:active::after { background: rgba(255,255,255,0.12); }
             </div>
           </div>
           <!-- SINGER/TECH CONTROLS -->
-          <div id="singer-controls" style="display:none;margin-top:8px;">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <div id="tech-copy-btn-wrap" style="display:none;">
-                <button class="ctrl-pill" onclick="copySheetToClipboard()">
-                  <iconify-icon icon="mdi:content-copy" style="font-size:16px;"></iconify-icon>
-                  <span id="copy-btn-label">Copy</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <div id="singer-controls" style="display:none;margin-top:8px;"></div>
           <!-- SHARED ZOOM CONTROLS — visible to all roles -->
           <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
             <button class="zoom-btn" onclick="zoomStep(-1)" title="Zoom out" aria-label="Zoom out">
@@ -888,6 +881,12 @@ button:active::after { background: rgba(255,255,255,0.12); }
             <button class="zoom-btn" onclick="zoomStep(1)" title="Zoom in" aria-label="Zoom in">
               <iconify-icon icon="mdi:plus" style="font-size:16px;"></iconify-icon>
             </button>
+            <div id="tech-copy-btn-wrap" style="display:none;margin-left:4px;">
+              <button class="zoom-btn" onclick="copySheetToClipboard()" title="Copy lyrics" style="width:auto;padding:0 10px;gap:5px;">
+                <iconify-icon icon="mdi:content-copy" style="font-size:15px;"></iconify-icon>
+                <span id="copy-btn-label" style="font-size:11px;font-weight:600;">Copy</span>
+              </button>
+            </div>
             <div style="flex:1;"></div>
             <span style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
               <iconify-icon icon="mdi:gesture-pinch" style="font-size:14px;"></iconify-icon>
@@ -1906,7 +1905,7 @@ let setlistsUnsubscribe = null;
 let usersUnsubscribe = null;
 let adminSettingsUnsubscribe = null;
 let currentSetlistSongs = [];
-let tutorialEnabled = true;
+let tutorialEnabled = false; /* TUTORIAL: set to true to re-enable all tutorials */
 let _signingOut = false;
 
 // ============================================================
@@ -2409,6 +2408,9 @@ function updateHomeBtn(show) {
               || activeTab === 'admin';
   const shouldShow = show && !atRoot;
   if (backBtn) backBtn.style.display = shouldShow ? 'flex' : 'none';
+  // Expand search pill to fill row when back button is hidden
+  const pill = document.getElementById('header-search-pill');
+  if (pill) pill.style.maxWidth = shouldShow ? '220px' : '9999px';
 
   // Hide search/filter when drilling into detail or on admin tab
   const actions = document.getElementById('header-actions');
@@ -2922,9 +2924,11 @@ function openSongSheet(songId, fromSetlist) {
   updateHomeBtn(true);
   updateSongSheetHeartBtn();
   renderSetlistDotIndicator();
+  /* TUTORIAL: uncomment to re-enable song tutorial
   if (tutorialEnabled && (currentUserProfile?.showTutorial !== false)) {
     setTimeout(showTutorialModal, 500);
   }
+  */
   setupSwipeListeners();
   pushState();
   stopAutoScroll();
@@ -2947,9 +2951,11 @@ function openSongSheet(songId, fromSetlist) {
   if (addSongFabEl) addSongFabEl.style.display = 'none';
   document.getElementById('fab-btn').style.display = 'none';
   updateAutoscrollFabPosition();
+  /* TUTORIAL: uncomment to re-enable autoscroll tutorial
   if (tutorialEnabled && (currentUserProfile?.showAutoscrollTutorial !== false)) {
     setTimeout(showAutoscrollTutorialModal, currentUserProfile?.showTutorial !== false ? 4500 : 500);
   }
+  */
   updateZoomIndicator();
 }
 
