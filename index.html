@@ -703,8 +703,8 @@ button:active::after { background: rgba(255,255,255,0.12); }
 <!-- ROLE PICKER SCREEN -->
 <div id="role-picker-screen" style="display:none;position:fixed;inset:0;background:var(--canvas-bg);flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:8000;">
   <div style="margin-bottom:32px;text-align:center;">
-    <div id="role-picker-logo-wrap" onclick="handleLogoPinTap()" style="cursor:pointer;display:inline-block;position:relative;margin-bottom:16px;">
-      <img src="icons/logo.png" alt="RCCM Gigbook" style="width:80px;height:80px;border-radius:18px;object-fit:cover;" onerror="this.style.display='none';document.getElementById('role-logo-fallback').style.display='flex'" />
+    <div id="role-picker-logo-wrap" onclick="handleLogoPinTap()" style="cursor:pointer;display:inline-block;position:relative;margin-bottom:16px;border-radius:18px;-webkit-tap-highlight-color:transparent;transition:transform 0.12s ease,box-shadow 0.12s ease;" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'" ontouchstart="this.style.transform='scale(0.93)'" ontouchend="this.style.transform='scale(1)'">
+      <img src="icons/logo.png" alt="RCCM Gigbook" style="width:80px;height:80px;border-radius:18px;object-fit:cover;display:block;" onerror="this.style.display='none';document.getElementById('role-logo-fallback').style.display='flex'" />
       <div id="role-logo-fallback" style="display:none;width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,#922b21,#c0392b);align-items:center;justify-content:center;">
         <iconify-icon icon="mdi:music-note" style="font-size:40px;color:#fff;"></iconify-icon>
       </div>
